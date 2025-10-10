@@ -1,0 +1,297 @@
+import { BalanceCard } from '@/components/BalanceCard';
+import { QuickActionButton } from '@/components/QuickActionButton';
+import { TransactionItem } from '@/components/TransactionItem';
+import { Colors } from '@/constants/Colors';
+import { borderRadius, spacing } from '@/constants/Typography';
+import { transactions } from '@/data/transactions';
+import { user } from '@/data/user';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import {
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+
+export default function HomeScreen() {
+  const router = useRouter();
+
+  const quickActions = [
+    { icon: 'bank-transfer', label: 'To CPPay', onPress: () => {} },
+    { icon: 'bank', label: 'To Bank', onPress: () => {} },
+    { icon: 'cash-multiple', label: 'Withdraw', onPress: () => {} },
+    { icon: 'phone', label: 'Airtime', onPress: () => {} },
+    { icon: 'chart-bar', label: 'Data', badge: 'UP to 6%', badgeColor: Colors.warning, onPress: () => {} },
+    { icon: 'dots-grid', label: 'More', onPress: () => {} },
+  ];
+
+  const recentTransactions = transactions.slice(0, 2);
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.cardBackground} />
+      
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <View style={styles.avatarContainer}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{user.nickname.charAt(0)}</Text>
+              </View>
+              {/* <View style={styles.upgradeBadge}>
+                <Text style={styles.upgradeBadgeText}>1</Text>
+              </View> */}
+            </View>
+            <View style={styles.greetingContainer}>
+              <Text style={styles.greeting}>Hi, {user.nickname}</Text>
+              {/* <TouchableOpacity style={styles.tierButton}>
+                <MaterialCommunityIcons name="chevron-right" size={16} color={Colors.warning} />
+              </TouchableOpacity> */}
+            </View>
+          </View>
+
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.headerIcon}>
+              <MaterialCommunityIcons name="headset" size={24} color={Colors.textPrimary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.headerIcon}>
+              <MaterialCommunityIcons name="qrcode-scan" size={24} color={Colors.textPrimary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerIcon}
+              onPress={() => router.push('/notifications' as any)}
+            >
+              <MaterialCommunityIcons name="bell" size={24} color={Colors.textPrimary} />
+              <View style={styles.notificationDot} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Balance Card */}
+        <BalanceCard
+          balance={user.balance}
+          onTransactionHistory={() => router.push('/transactions' as any)}
+          onAddMoney={() => {}}
+        />
+
+        {/* Recent Transactions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Recent Transactions</Text>
+          {recentTransactions.map((transaction) => (
+            <TransactionItem
+              key={transaction.id}
+              icon={transaction.icon}
+              title={transaction.title}
+              date={transaction.date}
+              amount={transaction.amount}
+              status={transaction.status}
+              iconColor={transaction.iconColor}
+              onPress={() =>
+                router.push({
+                  pathname: '/transaction-details' as any,
+                  params: { id: transaction.id },
+                })
+              }
+            />
+          ))}
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.quickActionsContainer}>
+          {quickActions.map((action, index) => (
+            <QuickActionButton
+              key={index}
+              icon={action.icon}
+              label={action.label}
+              badge={action.badge}
+              badgeColor={action.badgeColor}
+              onPress={action.onPress}
+            />
+          ))}
+        </View>
+        <View style={{ height: 20 }} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: Colors.cardBackground,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: spacing.md,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  upgradeBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: Colors.warning,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.cardBackground,
+  },
+  upgradeBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  greetingContainer: {
+    justifyContent: 'center',
+  },
+  greeting: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+    marginBottom: 2,
+  },
+  tierButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tierText: {
+    fontSize: 12,
+    color: Colors.warning,
+    marginRight: 2,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIcon: {
+    marginLeft: spacing.lg,
+    position: 'relative',
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.error,
+  },
+  section: {
+    marginTop: spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  quickActionsContainer: {
+    backgroundColor: Colors.cardBackground,
+    marginTop: spacing.lg,
+    paddingVertical: spacing.lg,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  bonusCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.cardBackground,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    padding: spacing.lg,
+    borderRadius: borderRadius.lg,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  bonusIconContainer: {
+    marginRight: spacing.md,
+  },
+  bonusContent: {
+    flex: 1,
+  },
+  bonusTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  bonusSubtitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  goButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.xl,
+  },
+  goButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  hotDealCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${Colors.primary}10`,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    padding: spacing.lg,
+    borderRadius: borderRadius.lg,
+  },
+  hotDealContent: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  hotDealTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  hotDealSubtitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+});
