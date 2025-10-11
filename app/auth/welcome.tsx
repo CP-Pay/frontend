@@ -2,13 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Colors } from '@/constants/Colors';
 
 export default function Welcome() {
   const router = useRouter();
 
   return (
     <LinearGradient
-      colors={['#1a1a2e', '#16213e', '#0f3460']}
+      colors={[Colors.backgroundGradient1, Colors.backgroundGradient2, Colors.backgroundGradient3]}
       style={styles.container}
     >
       <View style={styles.content}>
@@ -89,21 +90,21 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(143, 217, 251, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: Colors.primary,
   },
   logoText: {
     fontSize: 48,
-    color: '#fff',
+    color: Colors.primary,
   },
   appName: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   tagline: {
@@ -117,9 +118,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(143, 217, 251, 0.1)',
     padding: 16,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(143, 217, 251, 0.2)',
   },
   featureIcon: {
     fontSize: 24,
@@ -127,35 +130,41 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: 16,
-    color: '#fff',
+    color: '#FFFFFF',
     flex: 1,
+    fontWeight: '500',
   },
   buttonContainer: {
     gap: 16,
   },
   primaryButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    paddingVertical: 18,
+    borderRadius: 16,
     alignItems: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   primaryButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
     color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: 'rgba(143, 217, 251, 0.15)',
+    paddingVertical: 18,
+    borderRadius: 16,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: Colors.primary,
   },
   secondaryButtonText: {
+    color: Colors.primary,
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: 'bold',
   },
   termsText: {
     textAlign: 'center',

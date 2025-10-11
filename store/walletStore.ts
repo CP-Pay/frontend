@@ -85,10 +85,17 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
   // Initialize app state
   initialize: async () => {
     try {
+      console.log('🔄 Starting wallet store initialization...');
+      
       // Check if wallet exists
       const hasWallet = await SecureWalletStorage.hasWallet();
+      console.log('📱 Has wallet:', hasWallet);
+      
       const biometricEnabled = await SecureWalletStorage.isBiometricEnabled();
+      console.log('👆 Biometric enabled:', biometricEnabled);
+      
       const address = await SecureWalletStorage.getAddress();
+      console.log('📍 Wallet address:', address || 'none');
 
       set((state) => ({
         auth: {
@@ -103,12 +110,30 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
         },
       }));
 
+      console.log('✅ Wallet store initialized successfully');
+
       // Fetch prices if wallet exists
       if (hasWallet) {
+        console.log('💰 Fetching prices...');
         await get().updatePrices();
       }
     } catch (error) {
-      console.error('Failed to initialize:', error);
+      console.error('❌ Failed to initialize wallet store:', error);
+      console.error('Error details:', error instanceof Error ? error.message : String(error));
+      
+      // Set default state even if initialization fails
+      set((state) => ({
+        auth: {
+          ...state.auth,
+          hasWallet: false,
+          biometricEnabled: false,
+        },
+        wallet: {
+          ...state.wallet,
+          address: null,
+          isLocked: false,
+        },
+      }));
     }
   },
 

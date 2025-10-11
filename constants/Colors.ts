@@ -14,4 +14,8 @@ export const Colors = {
   border: '#E5E5E5',
   purple: '#7C3AED',
   purpleLight: '#A78BFA',
+  // Background gradients for dark theme
+  backgroundGradient1: '#1a1a2e',
+  backgroundGradient2: '#16213e',
+  backgroundGradient3: '#0f3460',
 };
