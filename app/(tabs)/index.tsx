@@ -22,15 +22,53 @@ export default function HomeScreen() {
   const router = useRouter();
 
   const quickActions = [
-    { icon: 'bank-transfer', label: 'To CPPay', onPress: () => {} },
-    { icon: 'bank', label: 'To Bank', onPress: () => {} },
-    { icon: 'cash-multiple', label: 'Withdraw', onPress: () => {} },
-    { icon: 'phone', label: 'Airtime', onPress: () => router.push('/services/airtime' as any) },
-    { icon: 'chart-bar', label: 'Data', badge: 'UP to 6%', badgeColor: Colors.warning, onPress: () => {} },
-    { icon: 'dots-grid', label: 'More', onPress: () => {} },
-    { icon: 'send', label: 'Send Crypto', onPress: () => router.push('/send' as any) },
-    { icon: 'arrow-down', label: 'Receive', onPress: () => router.push('/receive' as any) },
-    { icon: 'swap-horizontal', label: 'Swap', onPress: () => router.push('/swap' as any) },
+    { 
+      icon: 'bank-transfer', 
+      label: 'To CPPay', 
+      onPress: () => router.push('/services/p2p-transfer' as any) 
+    },
+    { 
+      icon: 'bank', 
+      label: 'To Bank', 
+      onPress: () => router.push('/services/bank-transfer' as any) 
+    },
+    { 
+      icon: 'cash-multiple', 
+      label: 'Withdraw', 
+      onPress: () => router.push('/services/withdraw' as any) 
+    },
+    { 
+      icon: 'phone', 
+      label: 'Airtime', 
+      onPress: () => router.push('/services/airtime' as any) 
+    },
+    { 
+      icon: 'chart-bar', 
+      label: 'Data', 
+      badge: 'UP to 6%', 
+      badgeColor: Colors.warning, 
+      onPress: () => router.push('/services/data' as any) 
+    },
+    { 
+      icon: 'dots-grid', 
+      label: 'More', 
+      onPress: () => router.push('/services/more' as any) 
+    },
+    { 
+      icon: 'send', 
+      label: 'Send Crypto', 
+      onPress: () => router.push('/services/send-crypto' as any) 
+    },
+    { 
+      icon: 'arrow-down', 
+      label: 'Receive', 
+      onPress: () => router.push('/services/receive-crypto' as any) 
+    },
+    { 
+      icon: 'swap-horizontal', 
+      label: 'Swap', 
+      onPress: () => router.push('/services/swap' as any) 
+    },
   ];
 
   const recentTransactions = transactions.slice(0, 2);
