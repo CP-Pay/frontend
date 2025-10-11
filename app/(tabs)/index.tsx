@@ -25,9 +25,12 @@ export default function HomeScreen() {
     { icon: 'bank-transfer', label: 'To CPPay', onPress: () => {} },
     { icon: 'bank', label: 'To Bank', onPress: () => {} },
     { icon: 'cash-multiple', label: 'Withdraw', onPress: () => {} },
-    { icon: 'phone', label: 'Airtime', onPress: () => {} },
+    { icon: 'phone', label: 'Airtime', onPress: () => router.push('/services/airtime' as any) },
     { icon: 'chart-bar', label: 'Data', badge: 'UP to 6%', badgeColor: Colors.warning, onPress: () => {} },
     { icon: 'dots-grid', label: 'More', onPress: () => {} },
+    { icon: 'send', label: 'Send Crypto', onPress: () => router.push('/send' as any) },
+    { icon: 'arrow-down', label: 'Receive', onPress: () => router.push('/receive' as any) },
+    { icon: 'swap-horizontal', label: 'Swap', onPress: () => router.push('/swap' as any) },
   ];
 
   const recentTransactions = transactions.slice(0, 2);
@@ -35,6 +38,15 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.cardBackground} />
+      
+      {/* DEBUG: Temporary button to access debug tools */}
+      <TouchableOpacity 
+        style={styles.debugButton}
+        onPress={() => router.push('/debug' as any)}
+      >
+        <MaterialCommunityIcons name="bug" size={20} color="#fff" />
+        <Text style={styles.debugButtonText}>Debug Tools</Text>
+      </TouchableOpacity>
       
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* Header */}
@@ -270,6 +282,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: '#FFF',
+  },
+  debugButton: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    backgroundColor: '#ff5252',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    zIndex: 1000,
+  },
+  debugButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   hotDealCard: {
     flexDirection: 'row',
