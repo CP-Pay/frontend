@@ -16,6 +16,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
 import ThemedInput from "@/components/ThemedInput";
+import SelectInput from "@/components/SelectInput";
 
 const PROVIDERS = ["DSTV", "GOtv", "Startimes", "Showmax"];
 const PACKAGES = [
@@ -70,15 +71,13 @@ export default function CableTVScreen() {
         </View>
         <ScrollView style={styles.content}>
           <View style={styles.section}>
-            <Text style={styles.label}>Provider</Text>
-            <ThemedInput
-              pressable
-              onPress={() => Alert.alert("Select provider", "Coming soon")}
-            >
-              <Text style={provider ? styles.text : styles.placeholder}>
-                {provider || "Select provider"}
-              </Text>
-            </ThemedInput>
+            <SelectInput
+              options={PROVIDERS.map((p, i) => ({ key: String(i), label: p }))}
+              value={provider}
+              onSelect={(o) => setProvider(o.label)}
+              placeholder="Select provider"
+              label="Provider"
+            />
           </View>
           <View style={styles.section}>
             <Text style={styles.label}>Smart Card Number</Text>
@@ -89,15 +88,16 @@ export default function CableTVScreen() {
             />
           </View>
           <View style={styles.section}>
-            <Text style={styles.label}>Package</Text>
-            <ThemedInput
-              pressable
-              onPress={() => Alert.alert("Select package", "Coming soon")}
-            >
-              <Text style={selectedPackage ? styles.text : styles.placeholder}>
-                {selectedPackage || "Select package"}
-              </Text>
-            </ThemedInput>
+            <SelectInput
+              options={PACKAGES.map((p, i) => ({
+                key: String(i),
+                label: `${p.name} - ₦${p.price}`,
+              }))}
+              value={selectedPackage}
+              onSelect={(o) => setSelectedPackage(o.label)}
+              placeholder="Select package"
+              label="Package"
+            />
           </View>
           <TouchableOpacity
             style={[

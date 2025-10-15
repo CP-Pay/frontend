@@ -15,6 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { spacing, borderRadius } from "@/constants/Typography";
 import ThemedInput from "@/components/ThemedInput";
+import SelectInput from "@/components/SelectInput";
 
 export default function WaterScreen() {
   const router = useRouter();
@@ -65,15 +66,17 @@ export default function WaterScreen() {
         </View>
         <ScrollView style={styles.content}>
           <View style={styles.section}>
-            <Text style={styles.label}>Water Board</Text>
-            <ThemedInput
-              pressable
-              onPress={() => Alert.alert("Select", "Coming soon")}
-            >
-              <Text style={provider ? styles.text : styles.placeholder}>
-                {provider || "Select water board"}
-              </Text>
-            </ThemedInput>
+            <SelectInput
+              options={[
+                { key: "0", label: "Lagos Water (LAWMA)" },
+                { key: "1", label: "Abuja Water" },
+              ]}
+              value={provider}
+              onSelect={(o) => setProvider(o.label)}
+              placeholder="Select water board"
+              label="Water Board"
+              searchable
+            />
           </View>
           <View style={styles.section}>
             <Text style={styles.label}>Account Number</Text>

@@ -17,6 +17,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { spacing, borderRadius } from "@/constants/Typography";
 import { ThemeColors } from "@/constants/Colors";
 import ThemedInput from "@/components/ThemedInput";
+import SelectInput from "@/components/SelectInput";
 
 const BANKS = [
   "Access Bank",
@@ -95,15 +96,13 @@ export default function BankTransferScreen() {
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
-            <Text style={styles.label}>Select Bank</Text>
-            <ThemedInput
-              pressable
-              onPress={() => Alert.alert("Bank Selector", "Coming soon")}
-            >
-              <Text style={bankName ? styles.inputText : styles.placeholder}>
-                {bankName || "Select bank"}
-              </Text>
-            </ThemedInput>
+            <SelectInput
+              options={BANKS.map((b, i) => ({ key: String(i), label: b }))}
+              value={bankName}
+              onSelect={(o) => setBankName(o.label)}
+              placeholder="Select bank"
+              label="Select Bank"
+            />
           </View>
 
           <View style={styles.section}>

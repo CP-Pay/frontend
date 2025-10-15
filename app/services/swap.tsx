@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  TextInput,
   StatusBar,
   Alert,
 } from "react-native";
@@ -16,7 +17,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
-import ThemedInput from "@/components/ThemedInput";
 
 const TOKENS = [
   { symbol: "USDC", name: "USD Coin", balance: "1,250.00" },
@@ -84,21 +84,18 @@ export default function SwapScreen() {
           <View style={styles.section}>
             <Text style={styles.label}>From</Text>
             <View style={styles.swapCard}>
-              <ThemedInput
-                pressable
-                onPress={() => {}}
-                style={styles.tokenSelector as any}
-              >
+              <TouchableOpacity style={styles.tokenSelector}>
                 <Text style={styles.tokenSymbol}>{fromToken}</Text>
                 <MaterialCommunityIcons
                   name="chevron-down"
                   size={20}
                   color={colors.textPrimary}
                 />
-              </ThemedInput>
-              <ThemedInput
+              </TouchableOpacity>
+              <TextInput
                 style={styles.amountInput}
                 placeholder="0.00"
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="numeric"
                 value={fromAmount}
                 onChangeText={(value) => {
@@ -132,21 +129,18 @@ export default function SwapScreen() {
           <View style={styles.section}>
             <Text style={styles.label}>To</Text>
             <View style={styles.swapCard}>
-              <ThemedInput
-                pressable
-                onPress={() => {}}
-                style={styles.tokenSelector as any}
-              >
+              <TouchableOpacity style={styles.tokenSelector}>
                 <Text style={styles.tokenSymbol}>{toToken}</Text>
                 <MaterialCommunityIcons
                   name="chevron-down"
                   size={20}
                   color={colors.textPrimary}
                 />
-              </ThemedInput>
-              <ThemedInput
+              </TouchableOpacity>
+              <TextInput
                 style={styles.amountInput}
                 placeholder="0.00"
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="numeric"
                 value={toAmount}
                 editable={false}
