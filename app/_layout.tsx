@@ -1,6 +1,10 @@
 // IMPORTANT: Import polyfills for crypto operations FIRST
 import 'react-native-get-random-values';
 import { Buffer } from 'buffer';
+import { Stack } from "expo-router";
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect, useState } from 'react';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
 // Set up global polyfills
 global.Buffer = Buffer;
@@ -16,10 +20,7 @@ if (typeof global.crypto === 'undefined') {
   };
 }
 
-import { Stack } from "expo-router";
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
-import { ThemeProvider } from '@/contexts/ThemeContext';
+
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();

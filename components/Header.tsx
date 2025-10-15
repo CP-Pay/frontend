@@ -1,9 +1,9 @@
-import { Colors } from '@/constants/Colors';
-import { spacing } from '@/constants/Typography';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme } from "@/contexts/ThemeContext";
+import { spacing } from "@/constants/Typography";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface HeaderProps {
   title: string;
@@ -21,23 +21,41 @@ export const Header: React.FC<HeaderProps> = ({
   onRightPress,
 }) => {
   const router = useRouter();
+  const { colors } = useTheme();
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.cardBackground,
+          borderBottomColor: colors.border,
+        },
+      ]}
+    >
       <View style={styles.leftSection}>
         {showBack && (
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color={Colors.textPrimary} />
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            <MaterialCommunityIcons
+              name="arrow-left"
+              size={24}
+              color={colors.textPrimary}
+            />
           </TouchableOpacity>
         )}
       </View>
 
-      <Text style={styles.title}>{title}</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
 
       <View style={styles.rightSection}>
         {rightText && (
           <TouchableOpacity onPress={onRightPress}>
-            <Text style={styles.rightText}>{rightText}</Text>
+            <Text style={[styles.rightText, { color: colors.primary }]}>
+              {rightText}
+            </Text>
           </TouchableOpacity>
         )}
         {rightComponent}
@@ -49,35 +67,31 @@ export const Header: React.FC<HeaderProps> = ({
 const styles = StyleSheet.create({
   container: {
     height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.cardBackground,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
   },
   leftSection: {
     flex: 1,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   backButton: {
     padding: spacing.xs,
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
+    fontWeight: "700",
     flex: 2,
-    textAlign: 'center',
+    textAlign: "center",
   },
   rightSection: {
     flex: 1,
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   rightText: {
     fontSize: 14,
-    color: Colors.primary,
-    fontWeight: '500',
+    fontWeight: "600",
   },
 });
