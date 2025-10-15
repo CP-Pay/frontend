@@ -16,6 +16,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
 import ThemedInput from "@/components/ThemedInput";
+import SelectInput from "@/components/SelectInput";
 
 export default function InternetScreen() {
   const router = useRouter();
@@ -63,15 +64,17 @@ export default function InternetScreen() {
         </View>
         <ScrollView style={styles.content}>
           <View style={styles.section}>
-            <Text style={styles.label}>Provider</Text>
-            <ThemedInput
-              pressable
-              onPress={() => Alert.alert("Select ISP provider", "Coming soon")}
-            >
-              <Text style={provider ? styles.text : styles.placeholder}>
-                {provider || "Select ISP provider"}
-              </Text>
-            </ThemedInput>
+            <SelectInput
+              options={[
+                { key: "0", label: "MTN Home" },
+                { key: "1", label: "Spectranet" },
+                { key: "2", label: "Smile" },
+              ]}
+              value={provider}
+              onSelect={(o) => {}}
+              placeholder="Select ISP provider"
+              label="Provider"
+            />
           </View>
           <View style={styles.section}>
             <Text style={styles.label}>Account Number</Text>

@@ -230,7 +230,7 @@ const createStyles = (colors: ThemeColors) =>
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: colors.overlay,
+      backgroundColor: colors.cardBackground,
       justifyContent: "center",
       alignItems: "center",
     },

@@ -9,6 +9,7 @@ import {
   Alert,
 } from "react-native";
 import ThemedInput from "@/components/ThemedInput";
+import SelectInput from "@/components/SelectInput";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -20,7 +21,7 @@ import { user } from "@/data/user";
 
 export default function WithdrawScreen() {
   const router = useRouter();
-  const [bankName] = useState("");
+  const [bankName, setBankName] = useState("");
   const [accountNumber] = useState("");
   const [amount, setAmount] = useState("");
   const { colors, isDark } = useTheme();
@@ -73,20 +74,15 @@ export default function WithdrawScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.label}>Bank Account</Text>
-            <TouchableOpacity
-              style={styles.input}
-              onPress={() => Alert.alert("Select Bank Account", "Coming soon")}
-            >
-              <Text style={bankName ? styles.inputText : styles.placeholder}>
-                {bankName || "Select saved bank account"}
-              </Text>
-              <MaterialCommunityIcons
-                name="chevron-down"
-                size={24}
-                color={colors.textSecondary}
-              />
-            </TouchableOpacity>
+            <SelectInput
+              options={[{ key: "0", label: "Saved - Access Bank (****1234)" }]}
+              value={bankName}
+              onSelect={(o: { key: string; label: string }) => {
+                setBankName(o.label);
+              }}
+              placeholder="Select saved bank account"
+              label="Bank Account"
+            />
           </View>
 
           <View style={styles.section}>

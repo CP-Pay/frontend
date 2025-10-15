@@ -16,6 +16,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
 import ThemedInput from "@/components/ThemedInput";
+import SelectInput from "@/components/SelectInput";
 
 export default function EducationScreen() {
   const router = useRouter();
@@ -64,15 +65,17 @@ export default function EducationScreen() {
         </View>
         <ScrollView style={styles.content}>
           <View style={styles.section}>
-            <Text style={styles.label}>Institution</Text>
-            <ThemedInput
-              pressable
-              onPress={() => Alert.alert("Select institution", "Coming soon")}
-            >
-              <Text style={institution ? styles.text : styles.placeholder}>
-                {institution || "Select institution"}
-              </Text>
-            </ThemedInput>
+            <SelectInput
+              options={[
+                { key: "0", label: "University A" },
+                { key: "1", label: "College B" },
+              ]}
+              value={institution}
+              onSelect={(o) => {}}
+              placeholder="Select institution"
+              label="Institution"
+              searchable
+            />
           </View>
           <View style={styles.section}>
             <Text style={styles.label}>Student ID / Matric Number</Text>
@@ -83,15 +86,17 @@ export default function EducationScreen() {
             />
           </View>
           <View style={styles.section}>
-            <Text style={styles.label}>Purpose</Text>
-            <ThemedInput
-              pressable
-              onPress={() => Alert.alert("Select purpose", "Coming soon")}
-            >
-              <Text style={purpose ? styles.text : styles.placeholder}>
-                {purpose || "School fees, Exam fees, etc."}
-              </Text>
-            </ThemedInput>
+            <SelectInput
+              options={[
+                { key: "0", label: "Tuition" },
+                { key: "1", label: "Exam Fees" },
+                { key: "2", label: "Accommodation" },
+              ]}
+              value={purpose}
+              onSelect={(o) => {}}
+              placeholder="School fees, Exam fees, etc."
+              label="Purpose"
+            />
           </View>
           <View style={styles.section}>
             <Text style={styles.label}>Amount (₦)</Text>
@@ -131,7 +136,7 @@ const createStyles = (colors: ThemeColors) =>
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: colors.overlay,
+      backgroundColor: colors.cardBackground,
       justifyContent: "center",
       alignItems: "center",
     },

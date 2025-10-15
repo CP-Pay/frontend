@@ -17,6 +17,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { spacing, borderRadius } from "@/constants/Typography";
 import { ThemeColors } from "@/constants/Colors";
 import ThemedInput from "@/components/ThemedInput";
+import SelectInput from "@/components/SelectInput";
 
 const FREQUENCIES = ["daily", "weekly", "monthly"];
 const CATEGORIES = ["Rent", "Utilities", "Subscriptions", "Savings", "Other"];
@@ -145,12 +146,16 @@ export default function ScheduledPaymentsScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Category</Text>
-                <TouchableOpacity style={styles.input}>
-                  <Text style={category ? styles.text : styles.placeholder}>
-                    {category || "Select category"}
-                  </Text>
-                </TouchableOpacity>
+                <SelectInput
+                  options={CATEGORIES.map((c, i) => ({
+                    key: String(i),
+                    label: c,
+                  }))}
+                  value={category}
+                  onSelect={(o) => setCategory(o.label)}
+                  placeholder="Select category"
+                  label="Category"
+                />
               </View>
 
               <View style={styles.inputGroup}>
