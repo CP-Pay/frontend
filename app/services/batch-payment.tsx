@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,15 +6,16 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  SafeAreaView,
   StatusBar,
   Alert,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Colors } from '@/constants/Colors';
-import { spacing, borderRadius } from '@/constants/Typography';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useTheme } from "@/contexts/ThemeContext";
+import { ThemeColors } from "@/constants/Colors";
+import { spacing, borderRadius } from "@/constants/Typography";
 
 interface Payment {
   id: string;
@@ -25,14 +26,16 @@ interface Payment {
 
 export default function BatchPaymentScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
+  const styles = createStyles(colors);
   const [payments, setPayments] = useState<Payment[]>([
-    { id: '1', recipient: '', amount: '', note: '' },
+    { id: "1", recipient: "", amount: "", note: "" },
   ]);
 
   const addPayment = () => {
     setPayments([
       ...payments,
-      { id: Date.now().toString(), recipient: '', amount: '', note: '' },
+      { id: Date.now().toString(), recipient: "", amount: "", note: "" },
     ]);
   };
 
@@ -55,26 +58,40 @@ export default function BatchPaymentScreen() {
   const handleProceed = () => {
     const validPayments = payments.filter((p) => p.recipient && p.amount);
     if (validPayments.length === 0) {
-      Alert.alert('No Valid Payments', 'Add at least one payment with recipient and amount');
+      Alert.alert(
+        "No Valid Payments",
+        "Add at least one payment with recipient and amount"
+      );
       return;
     }
     Alert.alert(
-      'Coming Soon',
+      "Coming Soon",
       `Batch payment of ${validPayments.length} transactions will be processed via TransactionService.executeBatchTransaction()`
     );
   };
 
   return (
     <LinearGradient
-      colors={[Colors.backgroundGradient1, Colors.backgroundGradient2, Colors.backgroundGradient3]}
+      colors={[
+        colors.backgroundGradient1,
+        colors.backgroundGradient2,
+        colors.backgroundGradient3,
+      ]}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            <MaterialCommunityIcons
+              name="arrow-left"
+              size={24}
+              color={colors.textInverse}
+            />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Batch Payment</Text>
           <View style={{ width: 40 }} />
@@ -83,9 +100,14 @@ export default function BatchPaymentScreen() {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Info Card */}
           <View style={styles.infoCard}>
-            <MaterialCommunityIcons name="information" size={20} color={Colors.primary} />
+            <MaterialCommunityIcons
+              name="information"
+              size={20}
+              color={colors.primary}
+            />
             <Text style={styles.infoText}>
-              Send money to multiple recipients in one transaction. Save on gas fees!
+              Send money to multiple recipients in one transaction. Save on gas
+              fees!
             </Text>
           </View>
 
@@ -96,19 +118,27 @@ export default function BatchPaymentScreen() {
                 <Text style={styles.paymentTitle}>Payment {index + 1}</Text>
                 {payments.length > 1 && (
                   <TouchableOpacity onPress={() => removePayment(payment.id)}>
-                    <MaterialCommunityIcons name="close-circle" size={24} color="#FF6B6B" />
+                    <MaterialCommunityIcons
+                      name="close-circle"
+                      size={24}
+                      color={colors.negative}
+                    />
                   </TouchableOpacity>
                 )}
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Recipient (Username or Address)</Text>
+                <Text style={styles.label}>
+                  Recipient (Username or Address)
+                </Text>
                 <TextInput
                   style={styles.input}
                   placeholder="@username or 0x..."
-                  placeholderTextColor={Colors.textSecondary}
+                  placeholderTextColor={colors.textSecondary}
                   value={payment.recipient}
-                  onChangeText={(value) => updatePayment(payment.id, 'recipient', value)}
+                  onChangeText={(value) =>
+                    updatePayment(payment.id, "recipient", value)
+                  }
                 />
               </View>
 
@@ -117,10 +147,12 @@ export default function BatchPaymentScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="0.00"
-                  placeholderTextColor={Colors.textSecondary}
+                  placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
                   value={payment.amount}
-                  onChangeText={(value) => updatePayment(payment.id, 'amount', value)}
+                  onChangeText={(value) =>
+                    updatePayment(payment.id, "amount", value)
+                  }
                 />
               </View>
 
@@ -129,9 +161,11 @@ export default function BatchPaymentScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Add a note"
-                  placeholderTextColor={Colors.textSecondary}
+                  placeholderTextColor={colors.textSecondary}
                   value={payment.note}
-                  onChangeText={(value) => updatePayment(payment.id, 'note', value)}
+                  onChangeText={(value) =>
+                    updatePayment(payment.id, "note", value)
+                  }
                 />
               </View>
             </View>
@@ -139,7 +173,11 @@ export default function BatchPaymentScreen() {
 
           {/* Add Payment Button */}
           <TouchableOpacity style={styles.addButton} onPress={addPayment}>
-            <MaterialCommunityIcons name="plus-circle" size={24} color={Colors.primary} />
+            <MaterialCommunityIcons
+              name="plus-circle"
+              size={24}
+              color={colors.primary}
+            />
             <Text style={styles.addButtonText}>Add Another Payment</Text>
           </TouchableOpacity>
 
@@ -148,11 +186,15 @@ export default function BatchPaymentScreen() {
             <View style={styles.summaryCard}>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Total Recipients</Text>
-                <Text style={styles.summaryValue}>{payments.filter(p => p.recipient && p.amount).length}</Text>
+                <Text style={styles.summaryValue}>
+                  {payments.filter((p) => p.recipient && p.amount).length}
+                </Text>
               </View>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Total Amount</Text>
-                <Text style={styles.summaryValue}>₦{getTotalAmount().toLocaleString()}</Text>
+                <Text style={styles.summaryValue}>
+                  ₦{getTotalAmount().toLocaleString()}
+                </Text>
               </View>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Est. Gas Fee</Text>
@@ -168,7 +210,10 @@ export default function BatchPaymentScreen() {
           )}
 
           {/* Proceed Button */}
-          <TouchableOpacity style={styles.proceedButton} onPress={handleProceed}>
+          <TouchableOpacity
+            style={styles.proceedButton}
+            onPress={handleProceed}
+          >
             <Text style={styles.proceedButtonText}>Review & Send</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -176,152 +221,152 @@ export default function BatchPaymentScreen() {
     </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safeArea: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-  },
-  infoCard: {
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(76, 175, 80, 0.3)',
-    alignItems: 'center',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  paymentCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  paymentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  paymentTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  inputGroup: {
-    marginBottom: spacing.sm,
-  },
-  label: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: spacing.xs,
-  },
-  input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: 14,
-    color: '#fff',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-    borderStyle: 'dashed',
-    marginBottom: spacing.lg,
-  },
-  addButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.primary,
-  },
-  summaryCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.xs,
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  summaryValue: {
-    fontSize: 14,
-    color: '#fff',
-    fontWeight: '500',
-  },
-  summaryTotal: {
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.2)',
-    marginTop: spacing.sm,
-    paddingTop: spacing.sm,
-  },
-  summaryTotalLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  summaryTotalValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.primary,
-  },
-  proceedButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  proceedButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1 },
+    safeArea: { flex: 1 },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+    },
+    backButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.overlay,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    headerTitle: {
+      fontSize: 20,
+      fontWeight: "bold",
+      color: colors.textInverse,
+    },
+    content: {
+      flex: 1,
+      paddingHorizontal: spacing.lg,
+    },
+    infoCard: {
+      backgroundColor: colors.success + "10",
+      borderRadius: borderRadius.md,
+      padding: spacing.md,
+      flexDirection: "row",
+      gap: spacing.sm,
+      marginBottom: spacing.lg,
+      borderWidth: 1,
+      borderColor: colors.success + "30",
+      alignItems: "center",
+    },
+    infoText: {
+      flex: 1,
+      fontSize: 12,
+      color: colors.textSecondary,
+    },
+    paymentCard: {
+      backgroundColor: colors.cardBackground + "08",
+      borderRadius: borderRadius.lg,
+      padding: spacing.md,
+      marginBottom: spacing.md,
+      borderWidth: 1,
+      borderColor: colors.divider + "20",
+    },
+    paymentHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: spacing.md,
+    },
+    paymentTitle: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: colors.textInverse,
+    },
+    inputGroup: {
+      marginBottom: spacing.sm,
+    },
+    label: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginBottom: spacing.xs,
+    },
+    input: {
+      backgroundColor: colors.cardBackground + "12",
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      fontSize: 14,
+      color: colors.textPrimary,
+      borderWidth: 1,
+      borderColor: colors.divider + "30",
+    },
+    addButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: spacing.sm,
+      paddingVertical: spacing.md,
+      borderRadius: borderRadius.md,
+      borderWidth: 2,
+      borderColor: colors.primary,
+      borderStyle: "dashed",
+      marginBottom: spacing.lg,
+    },
+    addButtonText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.primary,
+    },
+    summaryCard: {
+      backgroundColor: colors.cardBackground + "08",
+      borderRadius: borderRadius.lg,
+      padding: spacing.md,
+      marginBottom: spacing.lg,
+      borderWidth: 1,
+      borderColor: colors.divider + "20",
+    },
+    summaryRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: spacing.xs,
+    },
+    summaryLabel: {
+      fontSize: 14,
+      color: colors.textSecondary,
+    },
+    summaryValue: {
+      fontSize: 14,
+      color: colors.textInverse,
+      fontWeight: "500",
+    },
+    summaryTotal: {
+      borderTopWidth: 1,
+      borderTopColor: colors.divider + "20",
+      marginTop: spacing.sm,
+      paddingTop: spacing.sm,
+    },
+    summaryTotalLabel: {
+      fontSize: 16,
+      fontWeight: "bold",
+      color: colors.textInverse,
+    },
+    summaryTotalValue: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: colors.primary,
+    },
+    proceedButton: {
+      backgroundColor: colors.primary,
+      borderRadius: borderRadius.md,
+      paddingVertical: spacing.md,
+      alignItems: "center",
+      marginBottom: spacing.xl,
+    },
+    proceedButtonText: {
+      fontSize: 16,
+      fontWeight: "bold",
+      color: colors.textInverse,
+    },
+  });

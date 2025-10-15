@@ -1,10 +1,10 @@
-import { Colors } from '@/constants/Colors';
-import { borderRadius, spacing } from '@/constants/Typography';
-import { formatCurrency } from '@/utils/formatters';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme } from "@/contexts/ThemeContext";
+import { borderRadius, spacing } from "@/constants/Typography";
+import { formatCurrency } from "@/utils/formatters";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface BalanceCardProps {
   balance: number;
@@ -20,58 +20,195 @@ interface BalanceCardProps {
 
 export const BalanceCard: React.FC<BalanceCardProps> = ({
   balance,
-  label = 'Available Balance',
+  label = "Available Balance",
   gradient = true,
-  gradientColors = [Colors.primary, Colors.primaryDark],
+  gradientColors,
   showAddMoney = true,
   showTransactionHistory = true,
   onAddMoney,
   onTransactionHistory,
   interestToday,
 }) => {
-  const CardWrapper = gradient ? LinearGradient : View;
-  const cardProps = gradient
-    ? { colors: gradientColors, start: { x: 0, y: 0 }, end: { x: 1, y: 1 } }
-    : { style: { backgroundColor: Colors.primary } };
+  const { colors } = useTheme();
+
+  const effectiveGradient =
+    gradientColors && gradientColors.length >= 2
+      ? gradientColors
+      : [colors.primary, colors.primaryDark];
 
   return (
     <View style={styles.container}>
-      <CardWrapper {...cardProps} style={styles.card}>
-        <View style={styles.header}>
-          <View style={styles.labelContainer}>
-            <Text style={styles.label}>{label}</Text>
-            <MaterialCommunityIcons name="information-outline" size={16} color="#FFF" style={styles.infoIcon} />
+      {gradient ? (
+        <LinearGradient
+          colors={effectiveGradient as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.card, { borderRadius: borderRadius.xl }]}
+        >
+          <View>
+            <View style={styles.header}>
+              <View style={styles.labelContainer}>
+                <Text style={[styles.label, { color: colors.textInverse }]}>
+                  {label}
+                </Text>
+                <MaterialCommunityIcons
+                  name="information-outline"
+                  size={16}
+                  color={colors.textInverse}
+                  style={styles.infoIcon}
+                />
+              </View>
+              {showTransactionHistory && (
+                <TouchableOpacity
+                  onPress={onTransactionHistory}
+                  style={styles.historyButton}
+                >
+                  <Text
+                    style={[styles.historyText, { color: colors.textInverse }]}
+                  >
+                    Transaction History
+                  </Text>
+                  <MaterialCommunityIcons
+                    name="chevron-right"
+                    size={20}
+                    color={colors.textInverse}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <Text style={[styles.amount, { color: colors.textInverse }]}>
+              {formatCurrency(balance)}
+            </Text>
+
+            {interestToday !== undefined && (
+              <TouchableOpacity style={styles.interestContainer}>
+                <Text
+                  style={[styles.interestText, { color: colors.textInverse }]}
+                >
+                  Interest Credited Today: {formatCurrency(interestToday)}
+                </Text>
+                <MaterialCommunityIcons
+                  name="chevron-right"
+                  size={16}
+                  color={colors.textInverse}
+                />
+              </TouchableOpacity>
+            )}
+
+            {showAddMoney && (
+              <TouchableOpacity
+                style={[
+                  styles.addMoneyButton,
+                  { backgroundColor: colors.cardBackground },
+                ]}
+                onPress={onAddMoney}
+              >
+                <MaterialCommunityIcons
+                  name="plus"
+                  size={16}
+                  color={colors.primary}
+                />
+                <Text style={[styles.addMoneyText, { color: colors.primary }]}>
+                  Add Money
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
-          {showTransactionHistory && (
-            <TouchableOpacity onPress={onTransactionHistory} style={styles.historyButton}>
-              <Text style={styles.historyText}>Transaction History</Text>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#FFF" />
+        </LinearGradient>
+      ) : (
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.primaryLight,
+              borderRadius: borderRadius.xl,
+            },
+          ]}
+        >
+          <View style={styles.header}>
+            <View style={styles.labelContainer}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>
+                {label}
+              </Text>
+              <MaterialCommunityIcons
+                name="information-outline"
+                size={16}
+                color={colors.textPrimary}
+                style={styles.infoIcon}
+              />
+            </View>
+            {showTransactionHistory && (
+              <TouchableOpacity
+                onPress={onTransactionHistory}
+                style={styles.historyButton}
+              >
+                <Text
+                  style={[styles.historyText, { color: colors.textPrimary }]}
+                >
+                  Transaction History
+                </Text>
+                <MaterialCommunityIcons
+                  name="chevron-right"
+                  size={20}
+                  color={colors.textPrimary}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <Text style={[styles.amount, { color: colors.textPrimary }]}>
+            {formatCurrency(balance)}
+          </Text>
+
+          {interestToday !== undefined && (
+            <TouchableOpacity style={styles.interestContainer}>
+              <Text
+                style={[styles.interestText, { color: colors.textPrimary }]}
+              >
+                Interest Credited Today: {formatCurrency(interestToday)}
+              </Text>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={16}
+                color={colors.textPrimary}
+              />
+            </TouchableOpacity>
+          )}
+
+          {showAddMoney && (
+            <TouchableOpacity
+              style={[
+                styles.addMoneyButton,
+                { backgroundColor: colors.cardBackground },
+              ]}
+              onPress={onAddMoney}
+            >
+              <MaterialCommunityIcons
+                name="plus"
+                size={16}
+                color={colors.primary}
+              />
+              <Text style={[styles.addMoneyText, { color: colors.primary }]}>
+                Add Money
+              </Text>
             </TouchableOpacity>
           )}
         </View>
-
-        <Text style={styles.amount}>{formatCurrency(balance)}</Text>
-
-        {interestToday !== undefined && (
-          <TouchableOpacity style={styles.interestContainer}>
-            <Text style={styles.interestText}>
-              Interest Credited Today: {formatCurrency(interestToday)}
-            </Text>
-            <MaterialCommunityIcons name="chevron-right" size={16} color="#FFF" />
-          </TouchableOpacity>
-        )}
-
-        {showAddMoney && (
-          <TouchableOpacity style={styles.addMoneyButton} onPress={onAddMoney}>
-            <MaterialCommunityIcons name="plus" size={16} color={Colors.primary} />
-            <Text style={styles.addMoneyText}>Add Money</Text>
-          </TouchableOpacity>
-        )}
-      </CardWrapper>
+      )}
 
       {showAddMoney && (
-        <View style={styles.securityBadge}>
-          <MaterialCommunityIcons name="shield-check" size={24} color={Colors.primary} />
+        <View
+          style={[
+            styles.securityBadge,
+            { backgroundColor: colors.cardBackground },
+          ]}
+        >
+          <MaterialCommunityIcons
+            name="shield-check"
+            size={24}
+            color={colors.primary}
+          />
         </View>
       )}
     </View>
@@ -82,93 +219,84 @@ const styles = StyleSheet.create({
   container: {
     marginHorizontal: spacing.lg,
     marginVertical: spacing.md,
-    position: 'relative',
+    position: "relative",
   },
   card: {
-    borderRadius: borderRadius.xl,
     padding: spacing.xl,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: spacing.sm,
   },
   labelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   label: {
     fontSize: 14,
-    color: '#FFF',
-    opacity: 0.9,
+    opacity: 0.95,
   },
   infoIcon: {
     marginLeft: spacing.xs,
   },
   historyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   historyText: {
     fontSize: 14,
-    color: '#FFF',
+    color: "#FFF",
     marginRight: spacing.xs,
   },
   amount: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#FFF',
+    fontSize: 34,
+    fontWeight: "800",
     marginBottom: spacing.lg,
   },
   interestContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
     marginTop: spacing.sm,
   },
   interestText: {
     fontSize: 12,
-    color: '#FFF',
+    color: "#FFF",
     opacity: 0.9,
     marginRight: spacing.xs,
   },
   addMoneyButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: spacing.lg,
     right: spacing.lg,
-    backgroundColor: '#FFF',
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.xl,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    elevation: 4,
   },
   addMoneyText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: Colors.primary,
+    fontWeight: "700",
     marginLeft: spacing.xs,
   },
   securityBadge: {
-    position: 'absolute',
+    position: "absolute",
     bottom: -12,
     right: spacing.lg,
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     borderRadius: borderRadius.full,
     padding: spacing.sm,
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

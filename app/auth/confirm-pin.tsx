@@ -1,20 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Colors } from '@/constants/Colors';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useWalletStore } from '@/store/walletStore';
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { useTheme } from "@/contexts/ThemeContext";
+import { ThemeColors } from "@/constants/Colors";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useWalletStore } from "@/store/walletStore";
 
 export default function ConfirmPinScreen() {
   const router = useRouter();
-  const { pin: originalPin, mnemonic, privateKey, isImport } = useLocalSearchParams<{ 
+  const {
+    pin: originalPin,
+    mnemonic,
+    privateKey,
+    isImport,
+  } = useLocalSearchParams<{
     pin: string;
     mnemonic?: string;
     privateKey?: string;
     isImport?: string;
   }>();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { importWallet } = useWalletStore();
-  const [confirmPin, setConfirmPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState("");
   const [error, setError] = useState(false);
   const PIN_LENGTH = 6;
 
@@ -23,33 +31,36 @@ export default function ConfirmPinScreen() {
       if (confirmPin === originalPin) {
         // PIN matches
         setTimeout(async () => {
-          if (isImport === 'true') {
+          if (isImport === "true") {
             // Handle wallet import
             try {
               const isPrivateKey = !!privateKey;
-              const walletData = privateKey || mnemonic || '';
-              
+              const walletData = privateKey || mnemonic || "";
+
               await importWallet(walletData, originalPin, isPrivateKey, true);
-              
+
               Alert.alert(
-                'Success! 🎉',
-                'Your wallet has been imported successfully!',
+                "Success! 🎉",
+                "Your wallet has been imported successfully!",
                 [
                   {
-                    text: 'Get Started',
-                    onPress: () => router.replace('/(tabs)' as any)
-                  }
+                    text: "Get Started",
+                    onPress: () => router.replace("/(tabs)" as any),
+                  },
                 ]
               );
-            } catch (error) {
-              Alert.alert('Error', 'Failed to import wallet. Please try again.');
+            } catch {
+              Alert.alert(
+                "Error",
+                "Failed to import wallet. Please try again."
+              );
               router.back();
             }
           } else {
             // Proceed to wallet creation
             router.push({
-              pathname: '/auth/create-wallet' as any,
-              params: { pin: originalPin }
+              pathname: "/auth/create-wallet" as any,
+              params: { pin: originalPin },
             });
           }
         }, 300);
@@ -57,12 +68,20 @@ export default function ConfirmPinScreen() {
         // PIN doesn't match
         setError(true);
         setTimeout(() => {
-          setConfirmPin('');
+          setConfirmPin("");
           setError(false);
         }, 1000);
       }
     }
-  }, [confirmPin]);
+  }, [
+    confirmPin,
+    importWallet,
+    isImport,
+    mnemonic,
+    originalPin,
+    privateKey,
+    router,
+  ]);
 
   const handleNumberPress = (num: string) => {
     if (confirmPin.length < PIN_LENGTH) {
@@ -80,23 +99,32 @@ export default function ConfirmPinScreen() {
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color={Colors.textPrimary} />
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            <MaterialCommunityIcons
+              name="arrow-left"
+              size={24}
+              color={colors.textPrimary}
+            />
           </TouchableOpacity>
         </View>
 
         {/* Title */}
         <View style={styles.titleContainer}>
           <View style={[styles.iconCircle, error && styles.iconCircleError]}>
-            <MaterialCommunityIcons 
-              name={error ? "lock-alert-outline" : "lock-check-outline"} 
-              size={40} 
-              color={error ? Colors.error : Colors.primary} 
+            <MaterialCommunityIcons
+              name={error ? "lock-alert-outline" : "lock-check-outline"}
+              size={40}
+              color={error ? colors.error : colors.primary}
             />
           </View>
           <Text style={styles.title}>Confirm PIN</Text>
           <Text style={[styles.subtitle, error && styles.subtitleError]}>
-            {error ? 'PIN does not match. Try again.' : 'Re-enter your 6-digit PIN'}
+            {error
+              ? "PIN does not match. Try again."
+              : "Re-enter your 6-digit PIN"}
           </Text>
         </View>
 
@@ -108,11 +136,13 @@ export default function ConfirmPinScreen() {
               style={[
                 styles.pinDot,
                 index < confirmPin.length && styles.pinDotFilled,
-                error && index < confirmPin.length && styles.pinDotError
+                error && index < confirmPin.length && styles.pinDotError,
               ]}
             >
               {index < confirmPin.length && (
-                <View style={[styles.pinDotInner, error && styles.pinDotInnerError]} />
+                <View
+                  style={[styles.pinDotInner, error && styles.pinDotInnerError]}
+                />
               )}
             </View>
           ))}
@@ -133,7 +163,7 @@ export default function ConfirmPinScreen() {
           <View style={styles.numberButton} />
           <TouchableOpacity
             style={styles.numberButton}
-            onPress={() => handleNumberPress('0')}
+            onPress={() => handleNumberPress("0")}
             disabled={error}
           >
             <Text style={styles.numberText}>0</Text>
@@ -143,7 +173,11 @@ export default function ConfirmPinScreen() {
             onPress={handleBackspace}
             disabled={error}
           >
-            <MaterialCommunityIcons name="backspace-outline" size={28} color={Colors.textPrimary} />
+            <MaterialCommunityIcons
+              name="backspace-outline"
+              size={28}
+              color={colors.textPrimary}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -151,103 +185,78 @@ export default function ConfirmPinScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
-  },
-  header: {
-    marginBottom: 40,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-  },
-  titleContainer: {
-    alignItems: 'center',
-    marginBottom: 60,
-  },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: `${Colors.primary}20`,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  iconCircleError: {
-    backgroundColor: `${Colors.error}20`,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    paddingHorizontal: 20,
-  },
-  subtitleError: {
-    color: Colors.error,
-  },
-  pinContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    marginBottom: 60,
-  },
-  pinDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: Colors.textSecondary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pinDotFilled: {
-    borderColor: Colors.primary,
-  },
-  pinDotError: {
-    borderColor: Colors.error,
-  },
-  pinDotInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: Colors.primary,
-  },
-  pinDotInnerError: {
-    backgroundColor: Colors.error,
-  },
-  numberPad: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 20,
-  },
-  numberButton: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: Colors.cardBackground,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  numberText: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    content: {
+      flex: 1,
+      paddingHorizontal: 24,
+      paddingTop: 60,
+      paddingBottom: 40,
+    },
+    header: { marginBottom: 40 },
+    backButton: { width: 40, height: 40, justifyContent: "center" },
+    titleContainer: { alignItems: "center", marginBottom: 60 },
+    iconCircle: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: colors.primary + "20",
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 20,
+    },
+    iconCircleError: { backgroundColor: colors.error + "20" },
+    title: {
+      fontSize: 28,
+      fontWeight: "bold",
+      color: colors.textPrimary,
+      marginBottom: 12,
+    },
+    subtitle: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      textAlign: "center",
+      paddingHorizontal: 20,
+    },
+    subtitleError: { color: colors.error },
+    pinContainer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 16,
+      marginBottom: 60,
+    },
+    pinDot: {
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      borderWidth: 2,
+      borderColor: colors.textSecondary,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    pinDotFilled: { borderColor: colors.primary },
+    pinDotError: { borderColor: colors.error },
+    pinDotInner: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: colors.primary,
+    },
+    pinDotInnerError: { backgroundColor: colors.error },
+    numberPad: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      gap: 20,
+    },
+    numberButton: {
+      width: 70,
+      height: 70,
+      borderRadius: 35,
+      backgroundColor: colors.cardBackground,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    numberText: { fontSize: 28, fontWeight: "600", color: colors.textPrimary },
+  });
