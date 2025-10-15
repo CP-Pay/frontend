@@ -101,7 +101,7 @@ const createStyles = (colors: ThemeColors) =>
     appName: {
       fontSize: 36,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: 8,
     },
     tagline: { fontSize: 16, color: colors.textSecondary },
@@ -119,7 +119,7 @@ const createStyles = (colors: ThemeColors) =>
     featureIcon: { fontSize: 24, marginRight: 16 },
     featureText: {
       fontSize: 16,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       flex: 1,
       fontWeight: "500",
     },
@@ -136,7 +136,7 @@ const createStyles = (colors: ThemeColors) =>
       elevation: 4,
     },
     primaryButtonText: {
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontSize: 18,
       fontWeight: "bold",
     },

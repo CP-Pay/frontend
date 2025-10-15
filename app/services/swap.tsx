@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   Alert,
 } from "react-native";
@@ -17,6 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
+import ThemedInput from "@/components/ThemedInput";
 
 const TOKENS = [
   { symbol: "USDC", name: "USD Coin", balance: "1,250.00" },
@@ -72,7 +72,7 @@ export default function SwapScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
-              color={colors.textInverse}
+              color={colors.textPrimary}
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Swap Tokens</Text>
@@ -84,18 +84,21 @@ export default function SwapScreen() {
           <View style={styles.section}>
             <Text style={styles.label}>From</Text>
             <View style={styles.swapCard}>
-              <TouchableOpacity style={styles.tokenSelector}>
+              <ThemedInput
+                pressable
+                onPress={() => {}}
+                style={styles.tokenSelector as any}
+              >
                 <Text style={styles.tokenSymbol}>{fromToken}</Text>
                 <MaterialCommunityIcons
                   name="chevron-down"
                   size={20}
-                  color={colors.textInverse}
+                  color={colors.textPrimary}
                 />
-              </TouchableOpacity>
-              <TextInput
+              </ThemedInput>
+              <ThemedInput
                 style={styles.amountInput}
                 placeholder="0.00"
-                placeholderTextColor={colors.textSecondary}
                 keyboardType="numeric"
                 value={fromAmount}
                 onChangeText={(value) => {
@@ -129,18 +132,21 @@ export default function SwapScreen() {
           <View style={styles.section}>
             <Text style={styles.label}>To</Text>
             <View style={styles.swapCard}>
-              <TouchableOpacity style={styles.tokenSelector}>
+              <ThemedInput
+                pressable
+                onPress={() => {}}
+                style={styles.tokenSelector as any}
+              >
                 <Text style={styles.tokenSymbol}>{toToken}</Text>
                 <MaterialCommunityIcons
                   name="chevron-down"
                   size={20}
-                  color={colors.textInverse}
+                  color={colors.textPrimary}
                 />
-              </TouchableOpacity>
-              <TextInput
+              </ThemedInput>
+              <ThemedInput
                 style={styles.amountInput}
                 placeholder="0.00"
-                placeholderTextColor={colors.textSecondary}
                 keyboardType="numeric"
                 value={toAmount}
                 editable={false}
@@ -230,7 +236,7 @@ const createStyles = (colors: ThemeColors) =>
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     content: { flex: 1, paddingHorizontal: spacing.lg },
     section: { marginBottom: spacing.md },
@@ -255,12 +261,12 @@ const createStyles = (colors: ThemeColors) =>
     tokenSymbol: {
       fontSize: 18,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     amountInput: {
       fontSize: 32,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       padding: 0,
     },
     balance: {
@@ -291,7 +297,7 @@ const createStyles = (colors: ThemeColors) =>
       paddingVertical: spacing.xs,
     },
     infoLabel: { fontSize: 14, color: colors.textSecondary },
-    infoValue: { fontSize: 14, color: colors.textInverse, fontWeight: "500" },
+    infoValue: { fontSize: 14, color: colors.textPrimary, fontWeight: "500" },
     infoTotal: {
       borderTopWidth: 1,
       borderTopColor: colors.divider + "20",
@@ -301,7 +307,7 @@ const createStyles = (colors: ThemeColors) =>
     infoTotalLabel: {
       fontSize: 14,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     infoTotalValue: { fontSize: 16, fontWeight: "bold", color: colors.primary },
     warningCard: {
@@ -324,5 +330,5 @@ const createStyles = (colors: ThemeColors) =>
       marginTop: spacing.md,
     },
     buttonDisabled: { backgroundColor: colors.primary + "30" },
-    buttonText: { fontSize: 16, fontWeight: "bold", color: colors.textInverse },
+    buttonText: { fontSize: 16, fontWeight: "bold", color: colors.textPrimary },
   });

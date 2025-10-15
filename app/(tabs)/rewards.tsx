@@ -12,7 +12,7 @@ export default function RewardsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar
-        barStyle={colors.textInverse ? "light-content" : "dark-content"}
+        barStyle={colors.textPrimary ? "light-content" : "dark-content"}
         backgroundColor={colors.cardBackground}
       />
 

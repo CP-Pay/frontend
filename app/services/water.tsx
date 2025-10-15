@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   Alert,
 } from "react-native";
@@ -15,6 +14,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { spacing, borderRadius } from "@/constants/Typography";
+import ThemedInput from "@/components/ThemedInput";
 
 export default function WaterScreen() {
   const router = useRouter();
@@ -46,7 +46,7 @@ export default function WaterScreen() {
     >
       <SafeAreaView style={styles.safeArea}>
         <StatusBar
-          barStyle={colors.textInverse ? "light-content" : "dark-content"}
+          barStyle={colors.textPrimary ? "light-content" : "dark-content"}
           backgroundColor={colors.cardBackground}
         />
         <View style={styles.header}>
@@ -57,7 +57,7 @@ export default function WaterScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
-              color={colors.textInverse}
+              color={colors.textPrimary}
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Water Bill</Text>
@@ -66,28 +66,27 @@ export default function WaterScreen() {
         <ScrollView style={styles.content}>
           <View style={styles.section}>
             <Text style={styles.label}>Water Board</Text>
-            <TouchableOpacity style={styles.input}>
+            <ThemedInput
+              pressable
+              onPress={() => Alert.alert("Select", "Coming soon")}
+            >
               <Text style={provider ? styles.text : styles.placeholder}>
                 {provider || "Select water board"}
               </Text>
-            </TouchableOpacity>
+            </ThemedInput>
           </View>
           <View style={styles.section}>
             <Text style={styles.label}>Account Number</Text>
-            <TextInput
-              style={styles.input}
+            <ThemedInput
               placeholder="Enter account number"
-              placeholderTextColor={colors.textSecondary}
               value={accountNumber}
               onChangeText={setAccountNumber}
             />
           </View>
           <View style={styles.section}>
             <Text style={styles.label}>Amount (₦)</Text>
-            <TextInput
-              style={styles.input}
+            <ThemedInput
               placeholder="Enter amount"
-              placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
               value={amount}
               onChangeText={setAmount}
@@ -129,14 +128,14 @@ const createStyles = (colors: any) =>
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     content: { flex: 1, paddingHorizontal: spacing.lg },
     section: { marginBottom: spacing.lg },
     label: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.sm,
     },
     input: {
@@ -145,11 +144,11 @@ const createStyles = (colors: any) =>
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.md,
       fontSize: 16,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       borderWidth: 1,
       borderColor: colors.border,
     },
-    text: { color: colors.textInverse },
+    text: { color: colors.textPrimary },
     placeholder: { color: colors.textSecondary },
     button: {
       backgroundColor: colors.primary,
@@ -159,5 +158,5 @@ const createStyles = (colors: any) =>
       marginTop: spacing.md,
     },
     buttonDisabled: { backgroundColor: colors.border },
-    buttonText: { fontSize: 16, fontWeight: "bold", color: colors.textInverse },
+    buttonText: { fontSize: 16, fontWeight: "bold", color: colors.textPrimary },
   });

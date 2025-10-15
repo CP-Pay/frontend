@@ -5,9 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Alert,
   ActivityIndicator,
+  StatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -15,6 +15,10 @@ import { useWalletStore } from "@/store/walletStore";
 import { formatCurrency, formatCryptoAmount } from "@/utils/formatters";
 import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import ThemedInput from "@/components/ThemedInput";
+import { spacing } from "@/constants/Typography";
 
 const NETWORK_OPTIONS = [
   { id: "mtn", name: "MTN", color: "#FFCC00" },
@@ -28,7 +32,7 @@ const QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 export default function AirtimeScreen() {
   const router = useRouter();
   const { balances, prices } = useWalletStore();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = createStyles(colors);
 
   const [selectedNetwork, setSelectedNetwork] = useState("mtn");
@@ -94,7 +98,7 @@ export default function AirtimeScreen() {
         cryptoSymbol: selectedCrypto,
         cryptoAmount: cryptoNeeded.toString(),
       },
-    } as any);
+    });
   };
 
   return (
@@ -106,160 +110,166 @@ export default function AirtimeScreen() {
       ]}
       style={styles.container}
     >
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-      >
-        {/* Header */}
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => router.back()}
             style={styles.backButton}
           >
-            <Text style={styles.backButtonText}>← Back</Text>
+            <MaterialCommunityIcons
+              name="arrow-left"
+              size={24}
+              color={colors.textPrimary}
+            />
           </TouchableOpacity>
-          <Text style={styles.title}>Buy Airtime</Text>
-          <Text style={styles.subtitle}>
-            Purchase airtime with crypto instantly
-          </Text>
+          <Text style={styles.headerTitle}>Buy Airtime</Text>
+          <View style={{ width: 40 }} />
         </View>
 
-        {/* Network Selection */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Select Network</Text>
-          <View style={styles.networkGrid}>
-            {NETWORK_OPTIONS.map((network) => (
-              <TouchableOpacity
-                key={network.id}
-                style={[
-                  styles.networkCard,
-                  selectedNetwork === network.id && styles.networkCardActive,
-                ]}
-                onPress={() => setSelectedNetwork(network.id)}
-              >
-                <View
-                  style={[
-                    styles.networkDot,
-                    { backgroundColor: network.color },
-                  ]}
-                />
-                <Text style={styles.networkName}>{network.name}</Text>
-                {selectedNetwork === network.id && (
-                  <Text style={styles.checkmark}>✓</Text>
-                )}
-              </TouchableOpacity>
-            ))}
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Subtitle */}
+          <View style={{ marginBottom: 24 }}>
+            <Text style={styles.title}>Buy Airtime</Text>
+            <Text style={styles.subtitle}>
+              Purchase airtime with crypto instantly
+            </Text>
           </View>
-        </View>
 
-        {/* Phone Number */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Phone Number</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="08012345678"
-            placeholderTextColor={colors.textSecondary}
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            keyboardType="phone-pad"
-            maxLength={11}
-          />
-        </View>
-
-        {/* Amount */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Amount (₦)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter amount"
-            placeholderTextColor={colors.textSecondary}
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="numeric"
-          />
-
-          {/* Quick Amount Buttons */}
-          <View style={styles.quickAmounts}>
-            {QUICK_AMOUNTS.map((quickAmount) => (
-              <TouchableOpacity
-                key={quickAmount}
-                style={styles.quickAmountButton}
-                onPress={() => setAmount(quickAmount.toString())}
-              >
-                <Text style={styles.quickAmountText}>₦{quickAmount}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Select Crypto to Pay With */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Pay With</Text>
-          <View style={styles.cryptoOptions}>
-            {balances.tokens
-              .filter((t) => parseFloat(t.balance) > 0)
-              .map((token) => (
+          {/* Network Selection */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Select Network</Text>
+            <View style={styles.networkGrid}>
+              {NETWORK_OPTIONS.map((network) => (
                 <TouchableOpacity
-                  key={token.symbol}
+                  key={network.id}
                   style={[
-                    styles.cryptoOption,
-                    selectedCrypto === token.symbol &&
-                      styles.cryptoOptionActive,
+                    styles.networkCard,
+                    selectedNetwork === network.id && styles.networkCardActive,
                   ]}
-                  onPress={() => setSelectedCrypto(token.symbol)}
+                  onPress={() => setSelectedNetwork(network.id)}
                 >
-                  <Text style={styles.cryptoSymbol}>{token.symbol}</Text>
-                  <Text style={styles.cryptoBalance}>
-                    {formatCryptoAmount(parseFloat(token.balance))}
-                  </Text>
+                  <View
+                    style={[
+                      styles.networkDot,
+                      { backgroundColor: network.color },
+                    ]}
+                  />
+                  <Text style={styles.networkName}>{network.name}</Text>
+                  {selectedNetwork === network.id && (
+                    <Text style={styles.checkmark}>✓</Text>
+                  )}
                 </TouchableOpacity>
               ))}
-          </View>
-        </View>
-
-        {/* Crypto Calculation */}
-        {amount && cryptoNeeded > 0 && (
-          <View style={styles.calculationCard}>
-            <View style={styles.calculationRow}>
-              <Text style={styles.calculationLabel}>You&apos;ll Pay:</Text>
-              <Text style={styles.calculationValue}>
-                {formatCryptoAmount(cryptoNeeded)} {selectedCrypto}
-              </Text>
-            </View>
-            <View style={styles.calculationRow}>
-              <Text style={styles.calculationLabel}>
-                ≈ ₦{formatCurrency(Number(amount))}
-              </Text>
-              <Text style={styles.calculationFee}>+ ₦0.50 fee</Text>
             </View>
           </View>
-        )}
 
-        {/* Purchase Button */}
-        <TouchableOpacity
-          style={[
-            styles.purchaseButton,
-            (!phoneNumber || !amount) && styles.purchaseButtonDisabled,
-          ]}
-          onPress={handlePurchase}
-          disabled={!phoneNumber || !amount || loading}
-        >
-          {loading ? (
-            <ActivityIndicator color={colors.textInverse} />
-          ) : (
-            <Text style={styles.purchaseButtonText}>Review Purchase</Text>
+          {/* Phone Number */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Phone Number</Text>
+            <ThemedInput
+              placeholder="08012345678"
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              keyboardType="phone-pad"
+              maxLength={11}
+            />
+          </View>
+
+          {/* Amount */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Amount (₦)</Text>
+            <ThemedInput
+              placeholder="Enter amount"
+              value={amount}
+              onChangeText={setAmount}
+              keyboardType="numeric"
+            />
+
+            {/* Quick Amount Buttons */}
+            <View style={styles.quickAmounts}>
+              {QUICK_AMOUNTS.map((quickAmount) => (
+                <TouchableOpacity
+                  key={quickAmount}
+                  style={styles.quickAmountButton}
+                  onPress={() => setAmount(quickAmount.toString())}
+                >
+                  <Text style={styles.quickAmountText}>₦{quickAmount}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Select Crypto to Pay With */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Pay With</Text>
+            <View style={styles.cryptoOptions}>
+              {balances.tokens
+                .filter((t) => parseFloat(t.balance) > 0)
+                .map((token) => (
+                  <TouchableOpacity
+                    key={token.symbol}
+                    style={[
+                      styles.cryptoOption,
+                      selectedCrypto === token.symbol &&
+                        styles.cryptoOptionActive,
+                    ]}
+                    onPress={() => setSelectedCrypto(token.symbol)}
+                  >
+                    <Text style={styles.cryptoSymbol}>{token.symbol}</Text>
+                    <Text style={styles.cryptoBalance}>
+                      {formatCryptoAmount(parseFloat(token.balance))}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+            </View>
+          </View>
+
+          {/* Crypto Calculation */}
+          {amount && cryptoNeeded > 0 && (
+            <View style={styles.calculationCard}>
+              <View style={styles.calculationRow}>
+                <Text style={styles.calculationLabel}>You&apos;ll Pay:</Text>
+                <Text style={styles.calculationValue}>
+                  {formatCryptoAmount(cryptoNeeded)} {selectedCrypto}
+                </Text>
+              </View>
+              <View style={styles.calculationRow}>
+                <Text style={styles.calculationLabel}>
+                  ≈ ₦{formatCurrency(Number(amount))}
+                </Text>
+                <Text style={styles.calculationFee}>+ ₦0.50 fee</Text>
+              </View>
+            </View>
           )}
-        </TouchableOpacity>
 
-        {/* Info Note */}
-        <View style={styles.infoNote}>
-          <Text style={styles.infoIcon}>ℹ️</Text>
-          <Text style={styles.infoText}>
-            Your crypto will be automatically converted to NGN and airtime will
-            be credited instantly.
-          </Text>
-        </View>
-      </ScrollView>
+          {/* Purchase Button */}
+          <TouchableOpacity
+            style={[
+              styles.purchaseButton,
+              (!phoneNumber || !amount) && styles.purchaseButtonDisabled,
+            ]}
+            onPress={handlePurchase}
+            disabled={!phoneNumber || !amount || loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={colors.textPrimary} />
+            ) : (
+              <Text style={styles.purchaseButtonText}>Review Purchase</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Info Note */}
+          <View style={styles.infoNote}>
+            <Text style={styles.infoIcon}>ℹ️</Text>
+            <Text style={styles.infoText}>
+              Your crypto will be automatically converted to NGN and airtime
+              will be credited instantly.
+            </Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     </LinearGradient>
   );
 }
@@ -269,19 +279,34 @@ const createStyles = (colors: ThemeColors) =>
     container: {
       flex: 1,
     },
+    safeArea: { flex: 1 },
+
     scrollView: {
       flex: 1,
     },
     content: {
-      paddingHorizontal: 24,
-      paddingTop: 60,
-      paddingBottom: 40,
+      flex: 1,
+      paddingHorizontal: spacing.lg,
     },
     header: {
-      marginBottom: 32,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
     },
     backButton: {
-      marginBottom: 16,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.cardBackground,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    headerTitle: {
+      fontSize: 20,
+      fontWeight: "bold",
+      color: colors.textPrimary,
     },
     backButtonText: {
       fontSize: 16,
@@ -290,7 +315,7 @@ const createStyles = (colors: ThemeColors) =>
     title: {
       fontSize: 28,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: 8,
     },
     subtitle: {
@@ -303,7 +328,7 @@ const createStyles = (colors: ThemeColors) =>
     sectionLabel: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: 12,
     },
     networkGrid: {
@@ -334,7 +359,7 @@ const createStyles = (colors: ThemeColors) =>
     networkName: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       flex: 1,
     },
     checkmark: {
@@ -346,7 +371,7 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: 12,
       padding: 16,
       fontSize: 18,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       borderWidth: 1,
       borderColor: colors.cardBackground + "20",
     },
@@ -365,7 +390,7 @@ const createStyles = (colors: ThemeColors) =>
     quickAmountText: {
       fontSize: 14,
       fontWeight: "500",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     cryptoOptions: {
       flexDirection: "row",
@@ -387,7 +412,7 @@ const createStyles = (colors: ThemeColors) =>
     cryptoSymbol: {
       fontSize: 18,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: 4,
     },
     cryptoBalance: {
@@ -414,7 +439,7 @@ const createStyles = (colors: ThemeColors) =>
     calculationValue: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     calculationFee: {
       fontSize: 12,
@@ -433,7 +458,7 @@ const createStyles = (colors: ThemeColors) =>
     purchaseButtonText: {
       fontSize: 18,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     infoNote: {
       flexDirection: "row",

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   Alert,
 } from "react-native";
@@ -16,6 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
+import ThemedInput from "@/components/ThemedInput";
 import { useWalletStore } from "@/store/walletStore";
 import { ElectricityProvider } from "@/types/transaction";
 
@@ -96,7 +96,7 @@ export default function ElectricityScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
-              color={colors.textInverse}
+              color={colors.textPrimary}
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Electricity</Text>
@@ -168,10 +168,8 @@ export default function ElectricityScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Meter Number</Text>
             <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
+              <ThemedInput
                 placeholder="Enter meter number"
-                placeholderTextColor={colors.textSecondary}
                 keyboardType="numeric"
                 value={meterNumber}
                 onChangeText={setMeterNumber}
@@ -191,13 +189,12 @@ export default function ElectricityScreen() {
           {/* Amount */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Amount (₦)</Text>
-            <TextInput
-              style={styles.amountInput}
+            <ThemedInput
               placeholder="Enter amount"
-              placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
               value={amount}
               onChangeText={setAmount}
+              style={styles.amountInput}
             />
           </View>
 
@@ -295,7 +292,7 @@ const createStyles = (colors: ThemeColors) =>
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     scrollView: {
       flex: 1,
@@ -310,7 +307,7 @@ const createStyles = (colors: ThemeColors) =>
     sectionTitle: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.sm,
     },
     providerRow: {
@@ -334,7 +331,7 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.textSecondary,
     },
     providerTextActive: {
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "600",
     },
     meterTypeRow: {
@@ -359,7 +356,7 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.textSecondary,
     },
     meterTypeTextActive: {
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "600",
     },
     inputContainer: {
@@ -373,7 +370,7 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.md,
       fontSize: 16,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       borderWidth: 1,
       borderColor: colors.cardBackground + "20",
     },
@@ -384,7 +381,7 @@ const createStyles = (colors: ThemeColors) =>
       justifyContent: "center",
     },
     verifyButtonText: {
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "600",
       fontSize: 14,
     },
@@ -399,7 +396,7 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.md,
       fontSize: 24,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "bold",
       borderWidth: 1,
       borderColor: colors.cardBackground + "20",
@@ -419,7 +416,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     quickAmountText: {
       fontSize: 14,
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     summaryCard: {
       backgroundColor: colors.cardBackground + "05",
@@ -440,7 +437,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     summaryValue: {
       fontSize: 14,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "500",
     },
     summaryTotal: {
@@ -452,7 +449,7 @@ const createStyles = (colors: ThemeColors) =>
     summaryTotalLabel: {
       fontSize: 16,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     summaryTotalValue: {
       fontSize: 18,
@@ -472,6 +469,6 @@ const createStyles = (colors: ThemeColors) =>
     proceedButtonText: {
       fontSize: 16,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
   });

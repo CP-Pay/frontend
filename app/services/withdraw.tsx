@@ -5,10 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   Alert,
 } from "react-native";
+import ThemedInput from "@/components/ThemedInput";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -57,7 +57,7 @@ export default function WithdrawScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
-              color={colors.textInverse}
+              color={colors.textPrimary}
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Withdraw to Bank</Text>
@@ -91,10 +91,8 @@ export default function WithdrawScreen() {
 
           <View style={styles.section}>
             <Text style={styles.label}>Amount (₦)</Text>
-            <TextInput
-              style={styles.input}
+            <ThemedInput
               placeholder="Enter amount"
-              placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
               value={amount}
               onChangeText={setAmount}
@@ -139,7 +137,7 @@ const createStyles = (colors: ThemeColors) =>
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     content: { flex: 1, paddingHorizontal: spacing.lg },
     balanceCard: {
@@ -157,13 +155,13 @@ const createStyles = (colors: ThemeColors) =>
     balanceAmount: {
       fontSize: 32,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     section: { marginBottom: spacing.lg },
     label: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.sm,
     },
     input: {
@@ -172,14 +170,14 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.md,
       fontSize: 16,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       borderWidth: 1,
       borderColor: colors.divider + "20",
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
     },
-    inputText: { color: colors.textInverse },
+    inputText: { color: colors.textPrimary },
     placeholder: { color: colors.textSecondary },
     hint: { fontSize: 12, color: colors.textSecondary, marginTop: spacing.xs },
     button: {
@@ -190,5 +188,5 @@ const createStyles = (colors: ThemeColors) =>
       marginTop: spacing.md,
     },
     buttonDisabled: { backgroundColor: colors.primary + "30" },
-    buttonText: { fontSize: 16, fontWeight: "bold", color: colors.textInverse },
+    buttonText: { fontSize: 16, fontWeight: "bold", color: colors.textPrimary },
   });

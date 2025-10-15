@@ -220,6 +220,6 @@ const createStyles = (colors: ThemeColors) =>
     continueButtonText: {
       fontSize: 18,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
   });

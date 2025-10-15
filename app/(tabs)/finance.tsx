@@ -32,7 +32,7 @@ export default function FinanceScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar
-        barStyle={colors.textInverse ? "light-content" : "dark-content"}
+        barStyle={colors.textPrimary ? "light-content" : "dark-content"}
         backgroundColor={colors.cardBackground}
       />
 
@@ -93,7 +93,7 @@ export default function FinanceScreen() {
               <MaterialCommunityIcons
                 name="information-outline"
                 size={16}
-                color={colors.textInverse}
+                color={colors.textPrimary}
               />
             </View>
           </View>
@@ -109,7 +109,7 @@ export default function FinanceScreen() {
             <MaterialCommunityIcons
               name="chevron-right"
               size={16}
-              color={colors.textInverse}
+              color={colors.textPrimary}
             />
           </TouchableOpacity>
         </LinearGradient>
@@ -290,7 +290,7 @@ const createStyles = (colors: any) =>
       fontWeight: "500",
     },
     activeTabText: {
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     balanceCard: {
       margin: spacing.lg,
@@ -311,14 +311,14 @@ const createStyles = (colors: any) =>
     },
     balanceLabel: {
       fontSize: 14,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       opacity: 0.9,
       marginRight: spacing.xs,
     },
     balanceAmount: {
       fontSize: 32,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.md,
     },
     interestContainer: {
@@ -328,7 +328,7 @@ const createStyles = (colors: any) =>
     },
     interestText: {
       fontSize: 12,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       opacity: 0.9,
       marginRight: spacing.xs,
     },
@@ -428,7 +428,7 @@ const createStyles = (colors: any) =>
     featureCardButtonText: {
       fontSize: 14,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     footerNote: {
       fontSize: 10,

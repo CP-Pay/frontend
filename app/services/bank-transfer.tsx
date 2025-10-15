@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   Alert,
 } from "react-native";
@@ -17,6 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { spacing, borderRadius } from "@/constants/Typography";
 import { ThemeColors } from "@/constants/Colors";
+import ThemedInput from "@/components/ThemedInput";
 
 const BANKS = [
   "Access Bank",
@@ -39,7 +39,7 @@ export default function BankTransferScreen() {
   const [accountName, setAccountName] = useState("");
   const [amount, setAmount] = useState("");
   const [narration, setNarration] = useState("");
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = createStyles(colors);
 
   const handleVerifyAccount = () => {
@@ -76,17 +76,18 @@ export default function BankTransferScreen() {
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar
-          barStyle={colors.textInverse ? "light-content" : "dark-content"}
-          backgroundColor={colors.cardBackground}
-        />
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => router.back()}
             style={styles.backButton}
           >
-            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+            <MaterialCommunityIcons
+              name="arrow-left"
+              size={24}
+              color={colors.textPrimary}
+            />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Bank Transfer</Text>
           <View style={{ width: 40 }} />
@@ -95,28 +96,22 @@ export default function BankTransferScreen() {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
             <Text style={styles.label}>Select Bank</Text>
-            <TouchableOpacity
-              style={styles.input}
+            <ThemedInput
+              pressable
               onPress={() => Alert.alert("Bank Selector", "Coming soon")}
             >
               <Text style={bankName ? styles.inputText : styles.placeholder}>
                 {bankName || "Select bank"}
               </Text>
-              <MaterialCommunityIcons
-                name="chevron-down"
-                size={24}
-                color={colors.textSecondary}
-              />
-            </TouchableOpacity>
+            </ThemedInput>
           </View>
 
           <View style={styles.section}>
             <Text style={styles.label}>Account Number</Text>
             <View style={styles.inputRow}>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
+              <ThemedInput
+                style={{ flex: 1 }}
                 placeholder="0000000000"
-                placeholderTextColor={colors.textSecondary}
                 keyboardType="numeric"
                 maxLength={10}
                 value={accountNumber}
@@ -136,10 +131,8 @@ export default function BankTransferScreen() {
 
           <View style={styles.section}>
             <Text style={styles.label}>Amount (₦)</Text>
-            <TextInput
-              style={styles.input}
+            <ThemedInput
               placeholder="Enter amount"
-              placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
               value={amount}
               onChangeText={setAmount}
@@ -148,14 +141,13 @@ export default function BankTransferScreen() {
 
           <View style={styles.section}>
             <Text style={styles.label}>Narration (Optional)</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
+            <ThemedInput
               placeholder="Add a description"
-              placeholderTextColor={colors.textSecondary}
               multiline
               numberOfLines={3}
               value={narration}
               onChangeText={setNarration}
+              style={styles.textArea}
             />
           </View>
 
@@ -196,14 +188,14 @@ const createStyles = (colors: ThemeColors) =>
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     content: { flex: 1, paddingHorizontal: spacing.lg },
     section: { marginBottom: spacing.lg },
     label: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.sm,
     },
     input: {
@@ -212,14 +204,14 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.md,
       fontSize: 16,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       borderWidth: 1,
       borderColor: colors.border,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
     },
-    inputText: { color: colors.textInverse },
+    inputText: { color: colors.textPrimary },
     placeholder: { color: colors.textSecondary },
     inputRow: { flexDirection: "row", gap: spacing.sm },
     verifyButton: {
@@ -229,7 +221,7 @@ const createStyles = (colors: ThemeColors) =>
       justifyContent: "center",
     },
     verifyButtonText: {
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "600",
       fontSize: 14,
     },
@@ -242,6 +234,6 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
       marginTop: spacing.md,
     },
-    buttonDisabled: { backgroundColor: colors.border },
-    buttonText: { fontSize: 16, fontWeight: "bold", color: colors.textInverse },
+    buttonDisabled: { backgroundColor: colors.primary + "30" },
+    buttonText: { fontSize: 16, fontWeight: "bold", color: colors.textPrimary },
   });

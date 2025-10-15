@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   Alert,
 } from "react-native";
@@ -16,6 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
+import ThemedInput from "@/components/ThemedInput";
 
 const PROVIDERS = ["DSTV", "GOtv", "Startimes", "Showmax"];
 const PACKAGES = [
@@ -62,7 +62,7 @@ export default function CableTVScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
-              color={colors.textInverse}
+              color={colors.textPrimary}
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Cable TV</Text>
@@ -71,29 +71,33 @@ export default function CableTVScreen() {
         <ScrollView style={styles.content}>
           <View style={styles.section}>
             <Text style={styles.label}>Provider</Text>
-            <TouchableOpacity style={styles.input}>
+            <ThemedInput
+              pressable
+              onPress={() => Alert.alert("Select provider", "Coming soon")}
+            >
               <Text style={provider ? styles.text : styles.placeholder}>
                 {provider || "Select provider"}
               </Text>
-            </TouchableOpacity>
+            </ThemedInput>
           </View>
           <View style={styles.section}>
             <Text style={styles.label}>Smart Card Number</Text>
-            <TextInput
-              style={styles.input}
+            <ThemedInput
               placeholder="Enter smart card number"
-              placeholderTextColor={colors.textSecondary}
               value={smartCardNumber}
               onChangeText={setSmartCardNumber}
             />
           </View>
           <View style={styles.section}>
             <Text style={styles.label}>Package</Text>
-            <TouchableOpacity style={styles.input}>
+            <ThemedInput
+              pressable
+              onPress={() => Alert.alert("Select package", "Coming soon")}
+            >
               <Text style={selectedPackage ? styles.text : styles.placeholder}>
                 {selectedPackage || "Select package"}
               </Text>
-            </TouchableOpacity>
+            </ThemedInput>
           </View>
           <TouchableOpacity
             style={[
@@ -132,14 +136,14 @@ const createStyles = (colors: ThemeColors) =>
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     content: { flex: 1, paddingHorizontal: spacing.lg },
     section: { marginBottom: spacing.lg },
     label: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.sm,
     },
     input: {
@@ -148,11 +152,11 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.md,
       fontSize: 16,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       borderWidth: 1,
       borderColor: colors.cardBackground + "20",
     },
-    text: { color: colors.textInverse },
+    text: { color: colors.textPrimary },
     placeholder: { color: colors.textSecondary },
     button: {
       backgroundColor: colors.primary,
@@ -162,5 +166,5 @@ const createStyles = (colors: ThemeColors) =>
       marginTop: spacing.md,
     },
     buttonDisabled: { backgroundColor: colors.primary + "30" },
-    buttonText: { fontSize: 16, fontWeight: "bold", color: colors.textInverse },
+    buttonText: { fontSize: 16, fontWeight: "bold", color: colors.textPrimary },
   });

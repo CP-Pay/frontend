@@ -146,7 +146,7 @@ const createStyles = (colors: ThemeColors) =>
     title: {
       fontSize: 28,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: 12,
     },
     subtitle: { fontSize: 16, color: colors.textSecondary, lineHeight: 24 },
@@ -191,7 +191,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     wordText: {
       fontSize: 16,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "500",
       flex: 1,
     },
@@ -204,7 +204,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     regenerateButtonText: {
       fontSize: 16,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "600",
     },
     continueButton: {
@@ -216,7 +216,7 @@ const createStyles = (colors: ThemeColors) =>
     continueButtonText: {
       fontSize: 18,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     tipsContainer: {
       backgroundColor: colors.cardBackground + "05",
@@ -226,7 +226,7 @@ const createStyles = (colors: ThemeColors) =>
     tipsTitle: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: 8,
     },
     tipText: { fontSize: 14, color: colors.textSecondary, marginBottom: 4 },

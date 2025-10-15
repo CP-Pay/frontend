@@ -204,7 +204,7 @@ export default function ImportWallet() {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color={colors.textInverse} />
+            <ActivityIndicator color={colors.textPrimary} />
           ) : (
             <Text style={styles.continueButtonText}>Continue</Text>
           )}
@@ -234,7 +234,7 @@ const createStyles = (colors: ThemeColors) =>
     title: {
       fontSize: 32,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: 8,
     },
     subtitle: { fontSize: 16, color: colors.textSecondary, lineHeight: 24 },
@@ -270,7 +270,7 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.cardBackground + "10",
       borderRadius: 12,
       padding: 16,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontSize: 14,
       minHeight: 100,
       textAlignVertical: "top",
@@ -287,7 +287,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     continueButtonDisabled: { opacity: 0.6 },
     continueButtonText: {
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontSize: 16,
       fontWeight: "bold",
     },

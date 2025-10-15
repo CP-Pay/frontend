@@ -5,11 +5,11 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import ThemedInput from "@/components/ThemedInput";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -133,7 +133,7 @@ export default function DataScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
-              color={colors.textInverse}
+              color={colors.textPrimary}
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Data Bundle</Text>
@@ -187,10 +187,8 @@ export default function DataScreen() {
           {/* Phone Number */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Phone Number</Text>
-            <TextInput
-              style={styles.input}
+            <ThemedInput
               placeholder="080XXXXXXXX"
-              placeholderTextColor={colors.textSecondary}
               keyboardType="phone-pad"
               maxLength={11}
               value={phoneNumber}
@@ -311,7 +309,7 @@ const createStyles = (colors: ThemeColors) =>
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     scrollView: {
       flex: 1,
@@ -326,7 +324,7 @@ const createStyles = (colors: ThemeColors) =>
     sectionTitle: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.sm,
     },
     networkGrid: {
@@ -353,7 +351,7 @@ const createStyles = (colors: ThemeColors) =>
       marginTop: spacing.sm,
     },
     networkNameActive: {
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "600",
     },
     input: {
@@ -362,7 +360,7 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.md,
       fontSize: 16,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       borderWidth: 1,
       borderColor: colors.cardBackground + "20",
     },
@@ -392,7 +390,7 @@ const createStyles = (colors: ThemeColors) =>
     planData: {
       fontSize: 18,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     planValidity: {
       fontSize: 12,
@@ -423,7 +421,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     summaryValue: {
       fontSize: 14,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "500",
     },
     summaryTotal: {
@@ -435,7 +433,7 @@ const createStyles = (colors: ThemeColors) =>
     summaryTotalLabel: {
       fontSize: 16,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     summaryTotalValue: {
       fontSize: 18,
@@ -455,6 +453,6 @@ const createStyles = (colors: ThemeColors) =>
     proceedButtonText: {
       fontSize: 16,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
   });

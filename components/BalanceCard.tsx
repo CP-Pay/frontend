@@ -48,13 +48,13 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
           <View>
             <View style={styles.header}>
               <View style={styles.labelContainer}>
-                <Text style={[styles.label, { color: colors.textInverse }]}>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>
                   {label}
                 </Text>
                 <MaterialCommunityIcons
                   name="information-outline"
                   size={16}
-                  color={colors.textInverse}
+                  color={colors.textPrimary}
                   style={styles.infoIcon}
                 />
               </View>
@@ -64,34 +64,34 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
                   style={styles.historyButton}
                 >
                   <Text
-                    style={[styles.historyText, { color: colors.textInverse }]}
+                    style={[styles.historyText, { color: colors.textPrimary }]}
                   >
                     Transaction History
                   </Text>
                   <MaterialCommunityIcons
                     name="chevron-right"
                     size={20}
-                    color={colors.textInverse}
+                    color={colors.textPrimary}
                   />
                 </TouchableOpacity>
               )}
             </View>
 
-            <Text style={[styles.amount, { color: colors.textInverse }]}>
+            <Text style={[styles.amount, { color: colors.textPrimary }]}>
               {formatCurrency(balance)}
             </Text>
 
             {interestToday !== undefined && (
               <TouchableOpacity style={styles.interestContainer}>
                 <Text
-                  style={[styles.interestText, { color: colors.textInverse }]}
+                  style={[styles.interestText, { color: colors.textPrimary }]}
                 >
                   Interest Credited Today: {formatCurrency(interestToday)}
                 </Text>
                 <MaterialCommunityIcons
                   name="chevron-right"
                   size={16}
-                  color={colors.textInverse}
+                  color={colors.textPrimary}
                 />
               </TouchableOpacity>
             )}

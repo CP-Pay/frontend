@@ -178,7 +178,7 @@ const createStyles = (colors: ThemeColors) =>
     title: {
       fontSize: 28,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: 12,
     },
     subtitle: { fontSize: 16, color: colors.textSecondary, lineHeight: 24 },
@@ -197,10 +197,10 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.success + "10",
       borderColor: colors.success,
     },
-    slotText: { fontSize: 18, color: colors.textInverse, fontWeight: "500" },
+    slotText: { fontSize: 18, color: colors.textPrimary, fontWeight: "500" },
     selectLabel: {
       fontSize: 16,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "600",
       marginBottom: 16,
     },
@@ -224,7 +224,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     wordButtonText: {
       fontSize: 14,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "500",
     },
     wordButtonTextDisabled: { color: colors.textSecondary + "99" },
@@ -237,7 +237,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     clearButtonText: {
       fontSize: 16,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "600",
     },
     verifyButton: {
@@ -250,6 +250,6 @@ const createStyles = (colors: ThemeColors) =>
     verifyButtonText: {
       fontSize: 18,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
   });

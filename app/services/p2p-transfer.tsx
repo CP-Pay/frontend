@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   SafeAreaView,
   StatusBar,
   Alert,
@@ -16,6 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
+import ThemedInput from "@/components/ThemedInput";
 
 export default function P2PTransferScreen() {
   const router = useRouter();
@@ -56,7 +56,7 @@ export default function P2PTransferScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
-              color={colors.textInverse}
+              color={colors.textPrimary}
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Send to CPPay User</Text>
@@ -66,10 +66,8 @@ export default function P2PTransferScreen() {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
             <Text style={styles.label}>Recipient (Username or Phone)</Text>
-            <TextInput
-              style={styles.input}
+            <ThemedInput
               placeholder="@username or phone number"
-              placeholderTextColor={colors.textSecondary}
               value={recipient}
               onChangeText={setRecipient}
             />
@@ -77,10 +75,8 @@ export default function P2PTransferScreen() {
 
           <View style={styles.section}>
             <Text style={styles.label}>Amount (₦)</Text>
-            <TextInput
-              style={styles.input}
+            <ThemedInput
               placeholder="Enter amount"
-              placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
               value={amount}
               onChangeText={setAmount}
@@ -89,14 +85,13 @@ export default function P2PTransferScreen() {
 
           <View style={styles.section}>
             <Text style={styles.label}>Note (Optional)</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
+            <ThemedInput
               placeholder="Add a note"
-              placeholderTextColor={colors.textSecondary}
               multiline
               numberOfLines={3}
               value={note}
               onChangeText={setNote}
+              style={styles.textArea}
             />
           </View>
 
@@ -137,14 +132,14 @@ const createStyles = (colors: ThemeColors) =>
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     content: { flex: 1, paddingHorizontal: spacing.lg },
     section: { marginBottom: spacing.lg },
     label: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.sm,
     },
     input: {
@@ -153,7 +148,7 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.md,
       fontSize: 16,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       borderWidth: 1,
       borderColor: colors.divider + "20",
     },
@@ -166,5 +161,5 @@ const createStyles = (colors: ThemeColors) =>
       marginTop: spacing.md,
     },
     buttonDisabled: { backgroundColor: colors.primary + "30" },
-    buttonText: { fontSize: 16, fontWeight: "bold", color: colors.textInverse },
+    buttonText: { fontSize: 16, fontWeight: "bold", color: colors.textPrimary },
   });

@@ -66,7 +66,7 @@ export default function ReceiveCryptoScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
-              color={colors.textInverse}
+              color={colors.textPrimary}
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Receive Crypto</Text>
@@ -172,7 +172,7 @@ export default function ReceiveCryptoScreen() {
             <MaterialCommunityIcons
               name="share-variant"
               size={20}
-              color={colors.textInverse}
+              color={colors.textPrimary}
             />
             <Text style={styles.shareButtonText}>Share Address</Text>
           </TouchableOpacity>
@@ -203,7 +203,7 @@ const createStyles = (colors: ThemeColors) =>
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     content: { flex: 1 },
     contentContainer: {
@@ -214,7 +214,7 @@ const createStyles = (colors: ThemeColors) =>
     label: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.sm,
     },
     tokenGrid: { flexDirection: "row", gap: spacing.sm },
@@ -232,7 +232,7 @@ const createStyles = (colors: ThemeColors) =>
       borderColor: colors.primary,
     },
     tokenText: { fontSize: 14, color: colors.textSecondary },
-    tokenTextActive: { color: colors.textInverse, fontWeight: "600" },
+    tokenTextActive: { color: colors.textPrimary, fontWeight: "600" },
     qrContainer: { alignItems: "center", marginVertical: spacing.xl },
     qrWrapper: {
       backgroundColor: colors.cardBackground,
@@ -256,7 +256,7 @@ const createStyles = (colors: ThemeColors) =>
     addressText: {
       flex: 1,
       fontSize: 14,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontFamily: "monospace",
     },
     iconButton: { padding: spacing.xs },
@@ -290,6 +290,6 @@ const createStyles = (colors: ThemeColors) =>
     shareButtonText: {
       fontSize: 16,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
   });

@@ -5,11 +5,11 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import ThemedInput from "@/components/ThemedInput";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -63,7 +63,7 @@ export default function SendCryptoScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
-              color={colors.textInverse}
+              color={colors.textPrimary}
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Send Crypto</Text>
@@ -101,10 +101,9 @@ export default function SendCryptoScreen() {
           <View style={styles.section}>
             <Text style={styles.label}>Recipient Address</Text>
             <View style={styles.inputRow}>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
+              <ThemedInput
+                style={{ flex: 1 }}
                 placeholder="0x..."
-                placeholderTextColor={colors.textSecondary}
                 value={recipient}
                 onChangeText={setRecipient}
               />
@@ -115,7 +114,7 @@ export default function SendCryptoScreen() {
                 <MaterialCommunityIcons
                   name="qrcode-scan"
                   size={24}
-                  color={colors.textInverse}
+                  color={colors.textPrimary}
                 />
               </TouchableOpacity>
             </View>
@@ -124,10 +123,8 @@ export default function SendCryptoScreen() {
           {/* Amount */}
           <View style={styles.section}>
             <Text style={styles.label}>Amount</Text>
-            <TextInput
-              style={styles.input}
+            <ThemedInput
               placeholder="0.00"
-              placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
               value={amount}
               onChangeText={setAmount}
@@ -199,7 +196,7 @@ const createStyles = (colors: ThemeColors) =>
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     content: {
       flex: 1,
@@ -211,7 +208,7 @@ const createStyles = (colors: ThemeColors) =>
     label: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.sm,
     },
     tokenGrid: {
@@ -236,7 +233,7 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.textSecondary,
     },
     tokenTextActive: {
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "600",
     },
     inputRow: {
@@ -249,7 +246,7 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.md,
       fontSize: 16,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       borderWidth: 1,
       borderColor: colors.cardBackground + "20",
     },
@@ -282,7 +279,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     infoValue: {
       fontSize: 14,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "500",
     },
     warningCard: {
@@ -314,6 +311,6 @@ const createStyles = (colors: ThemeColors) =>
     buttonText: {
       fontSize: 16,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
   });

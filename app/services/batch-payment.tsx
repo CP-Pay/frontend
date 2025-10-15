@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   Alert,
 } from "react-native";
@@ -16,6 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
+import ThemedInput from "@/components/ThemedInput";
 
 interface Payment {
   id: string;
@@ -90,7 +90,7 @@ export default function BatchPaymentScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
-              color={colors.textInverse}
+              color={colors.textPrimary}
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Batch Payment</Text>
@@ -131,10 +131,8 @@ export default function BatchPaymentScreen() {
                 <Text style={styles.label}>
                   Recipient (Username or Address)
                 </Text>
-                <TextInput
-                  style={styles.input}
+                <ThemedInput
                   placeholder="@username or 0x..."
-                  placeholderTextColor={colors.textSecondary}
                   value={payment.recipient}
                   onChangeText={(value) =>
                     updatePayment(payment.id, "recipient", value)
@@ -144,10 +142,8 @@ export default function BatchPaymentScreen() {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Amount (₦)</Text>
-                <TextInput
-                  style={styles.input}
+                <ThemedInput
                   placeholder="0.00"
-                  placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
                   value={payment.amount}
                   onChangeText={(value) =>
@@ -158,10 +154,8 @@ export default function BatchPaymentScreen() {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Note (Optional)</Text>
-                <TextInput
-                  style={styles.input}
+                <ThemedInput
                   placeholder="Add a note"
-                  placeholderTextColor={colors.textSecondary}
                   value={payment.note}
                   onChangeText={(value) =>
                     updatePayment(payment.id, "note", value)
@@ -243,7 +237,7 @@ const createStyles = (colors: ThemeColors) =>
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     content: {
       flex: 1,
@@ -282,7 +276,7 @@ const createStyles = (colors: ThemeColors) =>
     paymentTitle: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     inputGroup: {
       marginBottom: spacing.sm,
@@ -338,7 +332,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     summaryValue: {
       fontSize: 14,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       fontWeight: "500",
     },
     summaryTotal: {
@@ -350,7 +344,7 @@ const createStyles = (colors: ThemeColors) =>
     summaryTotalLabel: {
       fontSize: 16,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     summaryTotalValue: {
       fontSize: 18,
@@ -367,6 +361,6 @@ const createStyles = (colors: ThemeColors) =>
     proceedButtonText: {
       fontSize: 16,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
   });

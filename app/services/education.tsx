@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   Alert,
 } from "react-native";
@@ -16,6 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
+import ThemedInput from "@/components/ThemedInput";
 
 export default function EducationScreen() {
   const router = useRouter();
@@ -56,7 +56,7 @@ export default function EducationScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
-              color={colors.textInverse}
+              color={colors.textPrimary}
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Education Payment</Text>
@@ -65,36 +65,38 @@ export default function EducationScreen() {
         <ScrollView style={styles.content}>
           <View style={styles.section}>
             <Text style={styles.label}>Institution</Text>
-            <TouchableOpacity style={styles.input}>
+            <ThemedInput
+              pressable
+              onPress={() => Alert.alert("Select institution", "Coming soon")}
+            >
               <Text style={institution ? styles.text : styles.placeholder}>
                 {institution || "Select institution"}
               </Text>
-            </TouchableOpacity>
+            </ThemedInput>
           </View>
           <View style={styles.section}>
             <Text style={styles.label}>Student ID / Matric Number</Text>
-            <TextInput
-              style={styles.input}
+            <ThemedInput
               placeholder="Enter student ID"
-              placeholderTextColor={colors.textSecondary}
               value={studentId}
               onChangeText={setStudentId}
             />
           </View>
           <View style={styles.section}>
             <Text style={styles.label}>Purpose</Text>
-            <TouchableOpacity style={styles.input}>
+            <ThemedInput
+              pressable
+              onPress={() => Alert.alert("Select purpose", "Coming soon")}
+            >
               <Text style={purpose ? styles.text : styles.placeholder}>
                 {purpose || "School fees, Exam fees, etc."}
               </Text>
-            </TouchableOpacity>
+            </ThemedInput>
           </View>
           <View style={styles.section}>
             <Text style={styles.label}>Amount (₦)</Text>
-            <TextInput
-              style={styles.input}
+            <ThemedInput
               placeholder="Enter amount"
-              placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
               value={amount}
               onChangeText={setAmount}
@@ -136,14 +138,14 @@ const createStyles = (colors: ThemeColors) =>
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     content: { flex: 1, paddingHorizontal: spacing.lg },
     section: { marginBottom: spacing.lg },
     label: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.sm,
     },
     input: {
@@ -166,5 +168,5 @@ const createStyles = (colors: ThemeColors) =>
       marginTop: spacing.md,
     },
     buttonDisabled: { backgroundColor: colors.primaryLight },
-    buttonText: { fontSize: 16, fontWeight: "bold", color: colors.textInverse },
+    buttonText: { fontSize: 16, fontWeight: "bold", color: colors.textPrimary },
   });

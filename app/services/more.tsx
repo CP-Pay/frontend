@@ -218,7 +218,7 @@ export default function MoreServicesScreen() {
     >
       <SafeAreaView style={styles.safeArea}>
         <StatusBar
-          barStyle={colors.textInverse ? "light-content" : "dark-content"}
+          barStyle={colors.textPrimary ? "light-content" : "dark-content"}
         />
 
         {/* Header */}
@@ -230,7 +230,7 @@ export default function MoreServicesScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
-              color={colors.textInverse}
+              color={colors.textPrimary}
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>All Services</Text>
@@ -258,7 +258,7 @@ export default function MoreServicesScreen() {
                 size={20}
                 color={
                   selectedCategory === category.id
-                    ? colors.textInverse
+                    ? colors.textPrimary
                     : colors.textSecondary
                 }
               />
@@ -316,7 +316,7 @@ const createStyles = (colors: ThemeColors) =>
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     categoryScroll: {
       maxHeight: 60,
@@ -345,7 +345,7 @@ const createStyles = (colors: ThemeColors) =>
       fontWeight: "500",
     },
     categoryChipTextActive: {
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     scrollView: {
       flex: 1,
@@ -387,7 +387,7 @@ const createStyles = (colors: ThemeColors) =>
     serviceTitle: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: 4,
     },
     serviceDescription: {
@@ -403,6 +403,6 @@ const createStyles = (colors: ThemeColors) =>
     badgeText: {
       fontSize: 10,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
   });

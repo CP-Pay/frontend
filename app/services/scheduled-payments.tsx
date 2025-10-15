@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   Alert,
 } from "react-native";
@@ -17,6 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { spacing, borderRadius } from "@/constants/Typography";
 import { ThemeColors } from "@/constants/Colors";
+import ThemedInput from "@/components/ThemedInput";
 
 const FREQUENCIES = ["daily", "weekly", "monthly"];
 const CATEGORIES = ["Rent", "Utilities", "Subscriptions", "Savings", "Other"];
@@ -75,7 +75,7 @@ export default function ScheduledPaymentsScreen() {
     >
       <SafeAreaView style={styles.safeArea}>
         <StatusBar
-          barStyle={colors.textInverse ? "light-content" : "dark-content"}
+          barStyle={colors.textPrimary ? "light-content" : "dark-content"}
           backgroundColor={colors.cardBackground}
         />
 
@@ -102,10 +102,8 @@ export default function ScheduledPaymentsScreen() {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Recipient</Text>
-                <TextInput
-                  style={styles.input}
+                <ThemedInput
                   placeholder="Name or address"
-                  placeholderTextColor={colors.textSecondary}
                   value={recipient}
                   onChangeText={setRecipient}
                 />
@@ -113,10 +111,8 @@ export default function ScheduledPaymentsScreen() {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Amount (₦)</Text>
-                <TextInput
-                  style={styles.input}
+                <ThemedInput
                   placeholder="0.00"
-                  placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
                   value={amount}
                   onChangeText={setAmount}
@@ -159,10 +155,8 @@ export default function ScheduledPaymentsScreen() {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Start Date</Text>
-                <TextInput
-                  style={styles.input}
+                <ThemedInput
                   placeholder="YYYY-MM-DD"
-                  placeholderTextColor={colors.textSecondary}
                   value={startDate}
                   onChangeText={setStartDate}
                 />
@@ -170,10 +164,8 @@ export default function ScheduledPaymentsScreen() {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>End Date (Optional)</Text>
-                <TextInput
-                  style={styles.input}
+                <ThemedInput
                   placeholder="YYYY-MM-DD or leave empty for no end"
-                  placeholderTextColor={colors.textSecondary}
                   value={endDate}
                   onChangeText={setEndDate}
                 />
@@ -234,7 +226,7 @@ export default function ScheduledPaymentsScreen() {
                       <MaterialCommunityIcons
                         name="dots-vertical"
                         size={24}
-                        color={colors.textInverse}
+                        color={colors.textPrimary}
                       />
                     </TouchableOpacity>
                   </View>
@@ -314,7 +306,7 @@ const createStyles = (colors: ThemeColors) =>
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     addButton: {
       width: 40,
@@ -339,14 +331,14 @@ const createStyles = (colors: ThemeColors) =>
     infoTitle: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.xs,
     },
     infoText: { fontSize: 12, color: colors.textSecondary, lineHeight: 18 },
     sectionTitle: {
       fontSize: 18,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.md,
     },
     paymentCard: {
@@ -367,7 +359,7 @@ const createStyles = (colors: ThemeColors) =>
     paymentRecipient: {
       fontSize: 16,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.xs,
     },
     categoryBadge: {
@@ -394,11 +386,11 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
     },
     actionButtonPrimary: { backgroundColor: colors.primary },
-    actionButtonText: { fontSize: 14, color: colors.textInverse },
+    actionButtonText: { fontSize: 14, color: colors.textPrimary },
     actionButtonTextPrimary: {
       fontSize: 14,
       fontWeight: "600",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
     formCard: {
       backgroundColor: colors.cardBackground,
@@ -410,7 +402,7 @@ const createStyles = (colors: ThemeColors) =>
     formTitle: {
       fontSize: 20,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
       marginBottom: spacing.lg,
     },
     inputGroup: { marginBottom: spacing.md },
@@ -425,11 +417,11 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
       fontSize: 14,
-      color: colors.textInverse,
+      color: colors.textPrimary,
       borderWidth: 1,
       borderColor: colors.border,
     },
-    text: { color: colors.textInverse },
+    text: { color: colors.textPrimary },
     placeholder: { color: colors.textSecondary },
     frequencyRow: { flexDirection: "row", gap: spacing.sm },
     frequencyChip: {
@@ -446,7 +438,7 @@ const createStyles = (colors: ThemeColors) =>
       borderColor: colors.primary,
     },
     frequencyText: { fontSize: 14, color: colors.textSecondary },
-    frequencyTextActive: { color: colors.textInverse, fontWeight: "600" },
+    frequencyTextActive: { color: colors.textPrimary, fontWeight: "600" },
     buttonRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.md },
     button: {
       flex: 1,
@@ -456,10 +448,10 @@ const createStyles = (colors: ThemeColors) =>
     },
     cancelButton: { backgroundColor: colors.cardBackground },
     createButton: { backgroundColor: colors.primary },
-    cancelButtonText: { fontSize: 16, color: colors.textInverse },
+    cancelButtonText: { fontSize: 16, color: colors.textPrimary },
     createButtonText: {
       fontSize: 16,
       fontWeight: "bold",
-      color: colors.textInverse,
+      color: colors.textPrimary,
     },
   });
