@@ -1,26 +1,8 @@
-// IMPORTANT: Import polyfills for crypto operations FIRST
-import 'react-native-get-random-values';
-import { Buffer } from 'buffer';
 import { Stack } from "expo-router";
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-
-// Set up global polyfills
-global.Buffer = Buffer;
-
-// Polyfill for crypto.getRandomValues
-if (typeof global.crypto === 'undefined') {
-  global.crypto = {
-    // @ts-ignore
-    getRandomValues: (array: Uint8Array) => {
-      const crypto = require('react-native-get-random-values');
-      return crypto.getRandomValues(array);
-    },
-  };
-}
-
-
+import { NetworkProvider } from '@/contexts/NetworkContext';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -50,12 +32,14 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="transactions" options={{ headerShown: false }} />
-        <Stack.Screen name="transaction-details" options={{ headerShown: false }} />
-        <Stack.Screen name="notifications" options={{ headerShown: false }} />
-      </Stack>
+      <NetworkProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="transactions" options={{ headerShown: false }} />
+          <Stack.Screen name="transaction-details" options={{ headerShown: false }} />
+          <Stack.Screen name="notifications" options={{ headerShown: false }} />
+        </Stack>
+      </NetworkProvider>
     </ThemeProvider>
   );
 }

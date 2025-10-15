@@ -10,6 +10,8 @@ class SecureWalletStorage {
   private static readonly WALLET_MNEMONIC_KEY = 'wallet_mnemonic';
   private static readonly WALLET_PRIVATE_KEY = 'wallet_private_key';
   private static readonly WALLET_ADDRESS_KEY = 'wallet_address';
+  private static readonly SMART_ACCOUNT_ADDRESS_KEY = 'smart_account_address';
+  private static readonly SMART_ACCOUNT_DEPLOYED_KEY = 'smart_account_deployed';
   private static readonly PASSWORD_HASH_KEY = 'password_hash';
   private static readonly BIOMETRIC_ENABLED_KEY = 'biometric_enabled';
   private static readonly AUTH_TOKEN_KEY = 'auth_token';
@@ -176,12 +178,46 @@ class SecureWalletStorage {
   }
 
   /**
+   * Store smart account address (counterfactual or deployed)
+   */
+  static async storeSmartAccountAddress(address: string): Promise<void> {
+    await SecureStore.setItemAsync(this.SMART_ACCOUNT_ADDRESS_KEY, address);
+  }
+
+  /**
+   * Get smart account address
+   */
+  static async getSmartAccountAddress(): Promise<string | null> {
+    return await SecureStore.getItemAsync(this.SMART_ACCOUNT_ADDRESS_KEY);
+  }
+
+  /**
+   * Mark smart account as deployed on-chain
+   */
+  static async setSmartAccountDeployed(deployed: boolean): Promise<void> {
+    await SecureStore.setItemAsync(
+      this.SMART_ACCOUNT_DEPLOYED_KEY,
+      deployed.toString()
+    );
+  }
+
+  /**
+   * Check if smart account is deployed
+   */
+  static async isSmartAccountDeployed(): Promise<boolean> {
+    const value = await SecureStore.getItemAsync(this.SMART_ACCOUNT_DEPLOYED_KEY);
+    return value === 'true';
+  }
+
+  /**
    * Delete all wallet data (use with extreme caution!)
    */
   static async deleteWallet(): Promise<void> {
     await SecureStore.deleteItemAsync(this.WALLET_MNEMONIC_KEY);
     await SecureStore.deleteItemAsync(this.WALLET_PRIVATE_KEY);
     await SecureStore.deleteItemAsync(this.WALLET_ADDRESS_KEY);
+    await SecureStore.deleteItemAsync(this.SMART_ACCOUNT_ADDRESS_KEY);
+    await SecureStore.deleteItemAsync(this.SMART_ACCOUNT_DEPLOYED_KEY);
     await SecureStore.deleteItemAsync(this.PASSWORD_HASH_KEY);
     await SecureStore.deleteItemAsync(this.BIOMETRIC_ENABLED_KEY);
     await SecureStore.deleteItemAsync(this.AUTH_TOKEN_KEY);

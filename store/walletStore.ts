@@ -19,6 +19,10 @@ interface WalletStore extends AppState {
   lockWallet: () => void;
   deleteWallet: () => Promise<void>;
   
+  // Smart Account actions
+  initializeSmartAccount: (privateKey: string, chainId?: number) => Promise<void>;
+  getSmartAccountInfo: () => { address: string | null; isDeployed: boolean };
+  
   // Balance actions
   fetchBalances: () => Promise<void>;
   updatePrices: () => Promise<void>;
@@ -56,6 +60,8 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     isLocked: true,
     networks: WalletService.DEFAULT_NETWORKS,
     activeNetwork: 1, // Ethereum mainnet
+    smartAccountAddress: null,
+    isSmartAccountDeployed: false,
   },
   
   balances: {
@@ -97,6 +103,12 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       const address = await SecureWalletStorage.getAddress();
       console.log('📍 Wallet address:', address || 'none');
 
+      // Load smart account data
+      const smartAccountAddress = await SecureWalletStorage.getSmartAccountAddress();
+      const isSmartAccountDeployed = await SecureWalletStorage.isSmartAccountDeployed();
+      console.log('🔧 Smart account address:', smartAccountAddress || 'none');
+      console.log('✅ Smart account deployed:', isSmartAccountDeployed);
+
       set((state) => ({
         auth: {
           ...state.auth,
@@ -107,6 +119,8 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
           ...state.wallet,
           address,
           isLocked: hasWallet,
+          smartAccountAddress,
+          isSmartAccountDeployed,
         },
       }));
 
@@ -132,6 +146,8 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
           ...state.wallet,
           address: null,
           isLocked: false,
+          smartAccountAddress: null,
+          isSmartAccountDeployed: false,
         },
       }));
     }
@@ -168,12 +184,49 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
         },
       }));
 
+      // Create smart account automatically
+      await get().initializeSmartAccount(walletData.privateKey);
+
       // Fetch initial balances
       await get().fetchBalances();
     } catch (error) {
       console.error('Failed to create wallet:', error);
       throw error;
     }
+  },
+
+  // Initialize smart account from EOA
+  initializeSmartAccount: async (privateKey: string, chainId = 1) => {
+    try {
+      console.log('🔧 Initializing smart account...');
+      
+      const smartAccountData = await WalletService.createSmartAccountFromSigner(
+        privateKey,
+        chainId
+      );
+
+      set((state) => ({
+        wallet: {
+          ...state.wallet,
+          smartAccountAddress: smartAccountData.smartAccountAddress,
+          isSmartAccountDeployed: smartAccountData.isDeployed,
+        },
+      }));
+
+      console.log('✅ Smart account initialized:', smartAccountData.smartAccountAddress);
+    } catch (error) {
+      console.error('❌ Failed to initialize smart account:', error);
+      throw error;
+    }
+  },
+
+  // Get smart account info
+  getSmartAccountInfo: () => {
+    const state = get();
+    return {
+      address: state.wallet.smartAccountAddress,
+      isDeployed: state.wallet.isSmartAccountDeployed,
+    };
   },
 
   // Import existing wallet
@@ -212,6 +265,9 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
           isLocked: false,
         },
       }));
+
+      // Create smart account automatically
+      await get().initializeSmartAccount(walletData.privateKey);
 
       // Fetch initial balances
       await get().fetchBalances();
@@ -287,6 +343,8 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
           isLocked: true,
           networks: WalletService.DEFAULT_NETWORKS,
           activeNetwork: 1,
+          smartAccountAddress: null,
+          isSmartAccountDeployed: false,
         },
         balances: {
           tokens: [],

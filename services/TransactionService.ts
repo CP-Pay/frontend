@@ -26,6 +26,8 @@ import {
 import { createPublicClient, createWalletClient, http, parseUnits, formatUnits } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { mainnet, bsc, polygon } from 'viem/chains';
+import SmartAccountService from './smartAccount/SmartAccountService';
+import type { SmartAccountTransaction } from './smartAccount/types';
 
 /**
  * TransactionService
@@ -860,15 +862,38 @@ class TransactionService {
     sessionKeyId?: string
   ): Promise<string> {
     try {
-      console.log('🔄 Executing UserOperation...');
+      console.log('🔄 Executing UserOperation via Smart Account...');
 
-      // TODO: Build and send UserOperation to bundler
-      // This is a placeholder that simulates the operation
+      // Determine chain ID from transaction
+      const chainId = this.getChainIdFromTransaction(transaction);
 
-      // For now, return a mock hash
-      const mockHash = `0x${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
+      // Check if gas should be sponsored
+      const sponsorGas = transaction.fees?.isGasSponsored || false;
 
-      return mockHash;
+      // Build smart account transaction
+      const smartTx: SmartAccountTransaction = {
+        to: this.getRecipientAddress(transaction),
+        value: this.getTransactionValue(transaction),
+        data: this.encodeTransactionData(transaction),
+      };
+
+      console.log('📤 Smart Account Transaction:', {
+        to: smartTx.to,
+        value: smartTx.value.toString(),
+        chainId,
+        sponsorGas,
+      });
+
+      // Send via SmartAccountService
+      const userOpHash = await SmartAccountService.sendTransaction(
+        privateKey as `0x${string}`,
+        smartTx,
+        chainId,
+        sponsorGas
+      );
+
+      console.log('✅ UserOperation sent:', userOpHash);
+      return userOpHash;
     } catch (error) {
       console.error('❌ UserOperation failed:', error);
       throw error;
@@ -885,17 +910,129 @@ class TransactionService {
     sessionKeyId?: string
   ): Promise<string> {
     try {
-      console.log('🔄 Executing batch UserOperation...');
+      console.log('🔄 Executing batch UserOperation via Smart Account...');
 
-      // TODO: Build batch UserOperation with multiple calls
+      // Determine chain ID (use first transaction's chain)
+      const chainId = batch.items.length > 0
+        ? this.getChainIdFromBatchItem(batch.items[0])
+        : 1;
 
-      const mockHash = `0xbatch${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
+      // Build batch transactions
+      const smartTxs: SmartAccountTransaction[] = batch.items.map((item: BatchTransactionItem) => ({
+        to: this.getRecipientAddressFromBatchItem(item),
+        value: this.getTransactionValueFromBatchItem(item, batch.paymentToken),
+        data: this.encodeTransactionDataFromBatchItem(item),
+      }));
 
-      return mockHash;
+      console.log(`📤 Batch UserOperation with ${smartTxs.length} transactions`);
+
+      // Send batch via SmartAccountService
+      // Note: Gas sponsorship is determined automatically by SmartAccountService
+      const userOpHash = await SmartAccountService.sendBatchTransactions(
+        privateKey as `0x${string}`,
+        smartTxs,
+        chainId
+      );
+
+      console.log('✅ Batch UserOperation sent:', userOpHash);
+      return userOpHash;
     } catch (error) {
       console.error('❌ Batch UserOperation failed:', error);
       throw error;
     }
+  }
+
+  /**
+   * Get chain ID from batch item
+   */
+  private static getChainIdFromBatchItem(item: BatchTransactionItem): number {
+    // Default to Ethereum mainnet
+    return 1;
+  }
+
+  /**
+   * Get recipient address from batch item
+   */
+  private static getRecipientAddressFromBatchItem(item: BatchTransactionItem): `0x${string}` {
+    const PAYMENT_PROCESSOR = '0x1111111111111111111111111111111111111111';
+    
+    if (item.category === TransactionCategory.P2P_TRANSFER) {
+      const p2p = item.details as P2PTransfer;
+      return p2p.recipientAddress as `0x${string}`;
+    }
+    
+    if (item.category === TransactionCategory.CRYPTO_SEND) {
+      const crypto = item.details as CryptoSend;
+      return crypto.recipientAddress as `0x${string}`;
+    }
+
+    return PAYMENT_PROCESSOR as `0x${string}`;
+  }
+
+  /**
+   * Get transaction value from batch item
+   */
+  private static getTransactionValueFromBatchItem(item: BatchTransactionItem, paymentToken: PaymentToken): bigint {
+    // Convert amount to token units
+    const tokenAmount = (item.amountUSD / 1).toFixed(paymentToken.decimals); // Simplified conversion
+    return parseUnits(tokenAmount, paymentToken.decimals);
+  }
+
+  /**
+   * Encode transaction data from batch item
+   */
+  private static encodeTransactionDataFromBatchItem(item: BatchTransactionItem): `0x${string}` {
+    // For simple transfers, data is empty
+    return '0x' as `0x${string}`;
+  }
+
+  /**
+   * Get chain ID from transaction
+   */
+  private static getChainIdFromTransaction(transaction: Transaction): number {
+    // Extract chain ID from payment token or default to Ethereum mainnet
+    return transaction.paymentToken?.chainId || 1;
+  }
+
+  /**
+   * Get recipient address from transaction
+   */
+  private static getRecipientAddress(transaction: Transaction): `0x${string}` {
+    // For bill payments, use a payment processor contract
+    // For P2P transfers, use the recipient address
+    // For now, use a placeholder address
+    const PAYMENT_PROCESSOR = '0x1111111111111111111111111111111111111111';
+    
+    if (transaction.category === TransactionCategory.P2P_TRANSFER) {
+      const p2p = transaction.details as P2PTransfer;
+      return p2p.recipientAddress as `0x${string}`;
+    }
+    
+    if (transaction.category === TransactionCategory.CRYPTO_SEND) {
+      const crypto = transaction.details as CryptoSend;
+      return crypto.recipientAddress as `0x${string}`;
+    }
+
+    // For bill payments, use payment processor
+    return PAYMENT_PROCESSOR as `0x${string}`;
+  }
+
+  /**
+   * Get transaction value (in wei)
+   */
+  private static getTransactionValue(transaction: Transaction): bigint {
+    // Convert token amount to wei
+    return parseUnits(transaction.tokenAmount, transaction.paymentToken.decimals);
+  }
+
+  /**
+   * Encode transaction data
+   */
+  private static encodeTransactionData(transaction: Transaction): `0x${string}` {
+    // For simple transfers, data is empty
+    // For contract calls, encode function call data here
+    // TODO: Implement proper encoding based on transaction category
+    return '0x' as `0x${string}`;
   }
 
   /**

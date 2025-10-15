@@ -1,13 +1,20 @@
 import { BalanceCard } from "@/components/BalanceCard";
 import { QuickActionButton } from "@/components/QuickActionButton";
 import { TransactionItem } from "@/components/TransactionItem";
+import { SmartWalletAddress } from "@/components/SmartWalletAddress";
+import { TokenList } from "@/components/TokenList";
+import TokenSelector from "@/components/TokenSelector";
+import NetworkSelector from "@/components/NetworkSelector";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useNetwork } from "@/contexts/NetworkContext";
 import { borderRadius, spacing } from "@/constants/Typography";
 import { transactions } from "@/data/transactions";
 import { user } from "@/data/user";
+import { useWalletStore } from "@/store/walletStore";
+import { fetchTokenBalances, type TokenBalance } from "@/services/TokenBalanceService";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   ScrollView,
   StatusBar,
@@ -21,6 +28,52 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function HomeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { wallet, initializeSmartAccount } = useWalletStore();
+  const { currentNetwork, selectedToken, setSelectedToken, isTestnet } = useNetwork();
+  
+  // Token balances state
+  const [tokenBalances, setTokenBalances] = useState<TokenBalance[]>([]);
+  const [isLoadingBalances, setIsLoadingBalances] = useState(false);
+  const [showAllTokens, setShowAllTokens] = useState(false);
+  const [showNetworkSelector, setShowNetworkSelector] = useState(false);
+
+  // Fetch token balances when smart account address or network changes
+  useEffect(() => {
+    if (wallet.smartAccountAddress) {
+      loadTokenBalances();
+    }
+  }, [wallet.smartAccountAddress, currentNetwork.chainId]);
+
+  const loadTokenBalances = async () => {
+    if (!wallet.smartAccountAddress) return;
+    
+    setIsLoadingBalances(true);
+    try {
+      const balances = await fetchTokenBalances(
+        wallet.smartAccountAddress, 
+        currentNetwork.chainId
+      );
+      setTokenBalances(balances);
+    } catch (error) {
+      console.error('Failed to load token balances:', error);
+    } finally {
+      setIsLoadingBalances(false);
+    }
+  };
+
+  const handleRetrySmartAccount = async () => {
+    try {
+      // Get private key from secure storage and reinitialize
+      const privateKey = await import('@/services/SecureWalletStorage').then(
+        (mod) => mod.default.getPrivateKey('password')
+      );
+      if (privateKey) {
+        await initializeSmartAccount(privateKey);
+      }
+    } catch (error) {
+      console.error('Failed to retry smart account:', error);
+    }
+  };
 
   const quickActions = [
     {
@@ -106,6 +159,12 @@ export default function HomeScreen() {
             </View>
             <View style={styles.greetingContainer}>
               <Text style={styles.greeting}>Hi, {user.nickname}</Text>
+              {/* Smart Wallet Address - NEW */}
+              <SmartWalletAddress
+                address={wallet.smartAccountAddress}
+                isLoading={false}
+                onRetry={handleRetrySmartAccount}
+              />
               {/* <TouchableOpacity style={styles.tierButton}>
                 <MaterialCommunityIcons name="chevron-right" size={16} color={Colors.warning} />
               </TouchableOpacity> */}
@@ -113,6 +172,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.headerRight}>
+            {/* Network Indicator */}
             <TouchableOpacity style={styles.headerIcon}>
               <MaterialCommunityIcons
                 name="headset"
@@ -170,6 +230,22 @@ export default function HomeScreen() {
           ))}
         </View>
 
+        <TouchableOpacity
+          style={styles.networkIndicator}
+          onPress={() => setShowNetworkSelector(true)}
+        >
+          <View style={[
+            styles.networkDot,
+            { backgroundColor: isTestnet ? colors.warning : colors.success }
+          ]} />
+          <Text style={styles.networkText}>{currentNetwork.shortName}</Text>
+          <MaterialCommunityIcons
+            name="chevron-down"
+            size={16}
+            color={colors.textSecondary}
+          />
+        </TouchableOpacity>
+
         {/* Quick Actions */}
         <View style={styles.quickActionsContainer}>
           {quickActions.map((action, index) => (
@@ -185,6 +261,12 @@ export default function HomeScreen() {
         </View>
         <View style={{ height: 20 }} />
       </ScrollView>
+
+      {/* Network Selector Modal */}
+      <NetworkSelector
+        visible={showNetworkSelector}
+        onClose={() => setShowNetworkSelector(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -269,6 +351,30 @@ const createStyles = (colors: any) =>
       flexDirection: "row",
       alignItems: "center",
     },
+    networkIndicator: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.cardBackground,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginLeft: spacing.md,
+      marginTop: spacing.md,
+      maxWidth: 120,
+      gap: 6,
+    },
+    networkDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+    },
+    networkText: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: colors.textPrimary,
+    },
     headerIcon: {
       marginLeft: spacing.lg,
       position: "relative",
@@ -282,6 +388,17 @@ const createStyles = (colors: any) =>
       borderRadius: 4,
       backgroundColor: colors.error,
     },
+    tokenSelectorContainer: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.sm,
+    },
+    tokenSelectorLabel: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.textSecondary,
+      marginBottom: spacing.sm,
+    },
     section: {
       marginTop: spacing.lg,
     },
@@ -291,6 +408,23 @@ const createStyles = (colors: any) =>
       color: colors.textPrimary,
       paddingHorizontal: spacing.lg,
       marginBottom: spacing.md,
+    },
+    sectionHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: spacing.lg,
+      marginBottom: spacing.md,
+    },
+    viewAllButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
+    viewAllText: {
+      fontSize: 14,
+      color: colors.primary,
+      fontWeight: "600",
     },
     quickActionsContainer: {
       backgroundColor: colors.cardBackground,

@@ -7,6 +7,8 @@ import { createPublicClient, http, formatEther, parseEther } from 'viem';
 import { mainnet, bsc, polygon } from 'viem/chains';
 import { NetworkConfig, TokenBalance } from '@/types/wallet';
 import { Buffer } from 'buffer';
+import SmartAccountService from './smartAccount/SmartAccountService';
+import SecureWalletStorage from './SecureWalletStorage';
 
 /**
  * WalletService - Core cryptocurrency wallet functionality using Viem
@@ -49,13 +51,16 @@ class WalletService {
    */
   static generateMnemonic(): string {
     try {
+      console.log('🔑 Generating mnemonic...');
+      
       // Generate 128 bits of entropy = 12 words
       const mnemonic = bip39.generateMnemonic(128);
       console.log('✅ Generated mnemonic:', mnemonic.split(' ').length, 'words');
       return mnemonic;
     } catch (error) {
       console.error('❌ Error generating mnemonic:', error);
-      throw new Error('Failed to generate mnemonic phrase');
+      console.error('❌ Error details:', error instanceof Error ? error.message : String(error));
+      throw error;
     }
   }
 
@@ -139,6 +144,99 @@ class WalletService {
     mnemonic: string;
   } {
     return this.createWalletFromMnemonic(mnemonic);
+  }
+
+  /**
+   * Create smart account from EOA private key
+   * This generates a counterfactual address (deterministic, but not yet deployed)
+   */
+  static async createSmartAccountFromSigner(
+    eoaPrivateKey: string,
+    chainId: number = 1
+  ): Promise<{
+    smartAccountAddress: string;
+    isDeployed: boolean;
+  }> {
+    try {
+      console.log('🔧 Creating smart account from EOA signer...');
+      
+      const smartAccountInfo = await SmartAccountService.createSmartAccount(
+        eoaPrivateKey as `0x${string}`,
+        chainId
+      );
+
+      // Store smart account address
+      await SecureWalletStorage.storeSmartAccountAddress(smartAccountInfo.address);
+      await SecureWalletStorage.setSmartAccountDeployed(smartAccountInfo.isDeployed);
+
+      console.log('✅ Smart account created:', {
+        address: smartAccountInfo.address,
+        isDeployed: smartAccountInfo.isDeployed,
+        chainId
+      });
+
+      return {
+        smartAccountAddress: smartAccountInfo.address,
+        isDeployed: smartAccountInfo.isDeployed,
+      };
+    } catch (error) {
+      console.error('❌ Error creating smart account:', error);
+      throw new Error('Failed to create smart account');
+    }
+  }
+
+  /**
+   * Deploy smart account on-chain
+   * This sends the first UserOperation which triggers deployment
+   */
+  static async deploySmartAccount(
+    eoaPrivateKey: string,
+    chainId: number = 1
+  ): Promise<string> {
+    try {
+      console.log('🚀 Deploying smart account on-chain...');
+      
+      // Send a dummy transaction to trigger deployment
+      // The bundler will deploy the account as part of the first UserOp
+      const userOpHash = await SmartAccountService.sendTransaction(
+        eoaPrivateKey as `0x${string}`,
+        {
+          to: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+          value: 0n,
+          data: '0x' as `0x${string}`,
+        },
+        chainId,
+        false // Don't sponsor this deployment transaction
+      );
+
+      // Mark as deployed
+      await SecureWalletStorage.setSmartAccountDeployed(true);
+
+      console.log('✅ Smart account deployed! UserOp hash:', userOpHash);
+      
+      return userOpHash;
+    } catch (error) {
+      console.error('❌ Error deploying smart account:', error);
+      throw new Error('Failed to deploy smart account');
+    }
+  }
+
+  /**
+   * Check if smart account is deployed on-chain
+   */
+  static async isSmartAccountDeployed(
+    smartAccountAddress: string,
+    chainId: number = 1
+  ): Promise<boolean> {
+    try {
+      return await SmartAccountService.isAccountDeployed(
+        smartAccountAddress as `0x${string}`,
+        chainId
+      );
+    } catch (error) {
+      console.error('❌ Error checking smart account deployment:', error);
+      return false;
+    }
   }
 
   /**

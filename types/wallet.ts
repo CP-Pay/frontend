@@ -56,6 +56,8 @@ export interface WalletState {
   isLocked: boolean;
   networks: NetworkConfig[];
   activeNetwork: number; // chainId
+  smartAccountAddress: string | null; // ERC-4337 smart account address
+  isSmartAccountDeployed: boolean; // Whether the smart account is deployed on-chain
 }
 
 export interface BalanceState {
