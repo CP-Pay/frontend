@@ -12,6 +12,7 @@ import { transactions } from "@/data/transactions";
 import { user } from "@/data/user";
 import { useWalletStore } from "@/store/walletStore";
 import { fetchTokenBalances, type TokenBalance } from "@/services/TokenBalanceService";
+import { usePortfolio } from "@/hooks/usePortfolio";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState, useEffect } from "react";
@@ -22,6 +23,8 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -31,26 +34,40 @@ export default function HomeScreen() {
   const { wallet, initializeSmartAccount } = useWalletStore();
   const { currentNetwork, selectedToken, setSelectedToken, isTestnet } = useNetwork();
   
+  // Portfolio hook - Use EOA address to fetch real balances
+  // Auto-refresh disabled - balance updates via manual refresh or events
+  const { 
+    portfolio, 
+    isLoading: isLoadingPortfolio, 
+    error: portfolioError,
+    refresh: refreshPortfolio,
+    formatNGN 
+  } = usePortfolio({
+    walletAddress: wallet.address || undefined, // Use EOA address, not smart account
+    autoRefresh: false, // Disabled - use manual refresh only
+  });
+  
   // Token balances state
   const [tokenBalances, setTokenBalances] = useState<TokenBalance[]>([]);
   const [isLoadingBalances, setIsLoadingBalances] = useState(false);
   const [showAllTokens, setShowAllTokens] = useState(false);
   const [showNetworkSelector, setShowNetworkSelector] = useState(false);
 
-  // Fetch token balances when smart account address or network changes
+  // Fetch token balances only on initial mount
+  // Network changes should be handled by manual refresh
   useEffect(() => {
-    if (wallet.smartAccountAddress) {
+    if (wallet.address) {
       loadTokenBalances();
     }
-  }, [wallet.smartAccountAddress, currentNetwork.chainId]);
+  }, [wallet.address]); // Only when wallet address changes, not network
 
   const loadTokenBalances = async () => {
-    if (!wallet.smartAccountAddress) return;
+    if (!wallet.address) return; // Use EOA address
     
     setIsLoadingBalances(true);
     try {
       const balances = await fetchTokenBalances(
-        wallet.smartAccountAddress, 
+        wallet.address, // Use EOA address to get real balances
         currentNetwork.chainId
       );
       setTokenBalances(balances);
@@ -59,6 +76,14 @@ export default function HomeScreen() {
     } finally {
       setIsLoadingBalances(false);
     }
+  };
+
+  // Manual refresh handler - refreshes both portfolio and token balances
+  const handleManualRefresh = async () => {
+    await Promise.all([
+      refreshPortfolio(),
+      loadTokenBalances()
+    ]);
   };
 
   const handleRetrySmartAccount = async () => {
@@ -78,18 +103,33 @@ export default function HomeScreen() {
   const quickActions = [
     {
       icon: "bank-transfer",
-      label: "To CPPay",
+      label: "NGN to CPPay",
       onPress: () => router.push("/services/p2p-transfer" as any),
     },
     {
       icon: "bank",
-      label: "To Bank",
+      label: "NGN to Bank",
       onPress: () => router.push("/services/bank-transfer" as any),
     },
     {
       icon: "cash-multiple",
       label: "Withdraw",
       onPress: () => router.push("/services/withdraw" as any),
+    },
+    {
+      icon: "send",
+      label: "Send Crypto",
+      onPress: () => router.push("/services/send-crypto" as any),
+    },
+    {
+      icon: "arrow-down",
+      label: "Receive",
+      onPress: () => router.push("/services/receive-crypto" as any),
+    },
+    {
+      icon: "swap-horizontal",
+      label: "Swap",
+      onPress: () => router.push("/services/swap" as any),
     },
     {
       icon: "phone",
@@ -107,21 +147,6 @@ export default function HomeScreen() {
       icon: "dots-grid",
       label: "More",
       onPress: () => router.push("/services/more" as any),
-    },
-    {
-      icon: "send",
-      label: "Send Crypto",
-      onPress: () => router.push("/services/send-crypto" as any),
-    },
-    {
-      icon: "arrow-down",
-      label: "Receive",
-      onPress: () => router.push("/services/receive-crypto" as any),
-    },
-    {
-      icon: "swap-horizontal",
-      label: "Swap",
-      onPress: () => router.push("/services/swap" as any),
     },
   ];
 
@@ -145,7 +170,18 @@ export default function HomeScreen() {
         <Text style={styles.debugButtonText}>Debug Tools</Text>
       </TouchableOpacity>
 
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.container} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingPortfolio || isLoadingBalances}
+            onRefresh={handleManualRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+      >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -159,7 +195,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.greetingContainer}>
               <Text style={styles.greeting}>Hi, {user.nickname}</Text>
-              {/* Smart Wallet Address - NEW */}
+              {/*  Address - NEW */}
               <SmartWalletAddress
                 address={wallet.smartAccountAddress}
                 isLoading={false}
@@ -173,13 +209,6 @@ export default function HomeScreen() {
 
           <View style={styles.headerRight}>
             {/* Network Indicator */}
-            <TouchableOpacity style={styles.headerIcon}>
-              <MaterialCommunityIcons
-                name="headset"
-                size={24}
-                color={colors.textPrimary}
-              />
-            </TouchableOpacity>
             <TouchableOpacity style={styles.headerIcon}>
               <MaterialCommunityIcons
                 name="qrcode-scan"
@@ -203,9 +232,12 @@ export default function HomeScreen() {
 
         {/* Balance Card */}
         <BalanceCard
-          balance={user.balance}
+          balance={portfolio?.totalValueNGN || 0}
+          isLoading={isLoadingPortfolio}
+          holdings={portfolio?.holdings}
           onTransactionHistory={() => router.push("/transactions" as any)}
           onAddMoney={() => {}}
+          onRefresh={refreshPortfolio}
         />
 
         {/* Recent Transactions */}

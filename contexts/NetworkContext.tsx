@@ -93,12 +93,6 @@ export const NetworkProvider: React.FC<NetworkProviderProps> = ({ children }) =>
         if (currentNetwork.chainId === 1) {
           const sepoliaNetwork = DEFAULT_NETWORKS.find(n => n.chainId === 11155111);
           if (sepoliaNetwork) setCurrentNetworkState(sepoliaNetwork);
-        } else if (currentNetwork.chainId === 56) {
-          const bscTestnet = DEFAULT_NETWORKS.find(n => n.chainId === 97);
-          if (bscTestnet) setCurrentNetworkState(bscTestnet);
-        } else if (currentNetwork.chainId === 137) {
-          const amoyTestnet = DEFAULT_NETWORKS.find(n => n.chainId === 80002);
-          if (amoyTestnet) setCurrentNetworkState(amoyTestnet);
         } else if (currentNetwork.chainId === 1135) {
           const liskTestnet = DEFAULT_NETWORKS.find(n => n.chainId === 4202);
           if (liskTestnet) setCurrentNetworkState(liskTestnet);
@@ -108,12 +102,6 @@ export const NetworkProvider: React.FC<NetworkProviderProps> = ({ children }) =>
         if (currentNetwork.chainId === 11155111) {
           const ethMainnet = DEFAULT_NETWORKS.find(n => n.chainId === 1);
           if (ethMainnet) setCurrentNetworkState(ethMainnet);
-        } else if (currentNetwork.chainId === 97) {
-          const bscMainnet = DEFAULT_NETWORKS.find(n => n.chainId === 56);
-          if (bscMainnet) setCurrentNetworkState(bscMainnet);
-        } else if (currentNetwork.chainId === 80002) {
-          const polygonMainnet = DEFAULT_NETWORKS.find(n => n.chainId === 137);
-          if (polygonMainnet) setCurrentNetworkState(polygonMainnet);
         } else if (currentNetwork.chainId === 4202) {
           const liskMainnet = DEFAULT_NETWORKS.find(n => n.chainId === 1135);
           if (liskMainnet) setCurrentNetworkState(liskMainnet);
@@ -141,9 +129,13 @@ export const NetworkProvider: React.FC<NetworkProviderProps> = ({ children }) =>
     setCustomNetworks(prev => prev.filter(n => n.chainId !== chainId));
   };
 
-  const availableNetworks = isTestnet
-    ? [...DEFAULT_NETWORKS.filter(n => n.isTestnet), ...customNetworks.filter(n => n.isTestnet)]
-    : [...DEFAULT_NETWORKS.filter(n => !n.isTestnet), ...customNetworks.filter(n => !n.isTestnet)];
+  // Show ALL networks (both mainnet and testnet) at once
+  // Networks are grouped by testnet flag in the UI
+  const availableNetworks = [
+    ...DEFAULT_NETWORKS.filter(n => !n.isTestnet), // Mainnets first
+    ...DEFAULT_NETWORKS.filter(n => n.isTestnet),  // Then testnets
+    ...customNetworks, // Custom networks last
+  ];
 
   return (
     <NetworkContext.Provider

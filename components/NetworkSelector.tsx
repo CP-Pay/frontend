@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,19 +6,29 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
+  ScrollView,
   Image,
   Pressable,
   Switch,
+  ActivityIndicator,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNetwork } from '@/contexts/NetworkContext';
+import { usePortfolio } from '@/hooks/usePortfolio';
+import { useWalletStore } from '@/store/walletStore';
 import type { ThemeColors } from '@/constants/Colors';
 import type { Network } from '@/constants/Tokens';
 
 interface NetworkSelectorProps {
   visible: boolean;
   onClose: () => void;
+}
+
+interface NetworkWithBalance extends Network {
+  balance: string;
+  ngnValue: number;
+  isLoading: boolean;
 }
 
 export default function NetworkSelector({ visible, onClose }: NetworkSelectorProps) {
@@ -30,14 +40,51 @@ export default function NetworkSelector({ visible, onClose }: NetworkSelectorPro
     toggleTestnet,
     availableNetworks,
   } = useNetwork();
+  const wallet = useWalletStore((state) => state.wallet);
+  const { portfolio, isLoading: portfolioLoading, formatNGN } = usePortfolio({
+    walletAddress: wallet?.smartAccountAddress || undefined,
+    autoRefresh: false,
+  });
   const styles = createStyles(colors, isTestnet);
+
+  // Create networks with balance data
+  const getNetworkWithBalance = (network: Network): NetworkWithBalance => {
+    // Find holdings for this network's native token
+    const nativeTokenHolding = portfolio?.holdings.find(
+      h => h.network.chainId === network.chainId && h.token.isNative
+    );
+
+    return {
+      ...network,
+      balance: nativeTokenHolding?.balance || '0',
+      ngnValue: nativeTokenHolding?.valueNGN || 0,
+      isLoading: portfolioLoading,
+    };
+  };
 
   const handleSelectNetwork = (network: Network) => {
     setCurrentNetwork(network);
     onClose();
   };
 
-  const renderNetworkItem = ({ item }: { item: Network }) => {
+  // Group networks by mainnet/testnet with balance data
+  const mainnetNetworks = availableNetworks
+    .filter(n => !n.isTestnet)
+    .map(getNetworkWithBalance);
+  const testnetNetworks = availableNetworks
+    .filter(n => n.isTestnet)
+    .map(getNetworkWithBalance);
+
+  const renderSectionHeader = (title: string, count: number) => (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.sectionBadge}>
+        <Text style={styles.sectionCount}>{count}</Text>
+      </View>
+    </View>
+  );
+
+  const renderNetworkItem = ({ item }: { item: NetworkWithBalance }) => {
     const isSelected = item.chainId === currentNetwork.chainId;
 
     return (
@@ -65,10 +112,31 @@ export default function NetworkSelector({ visible, onClose }: NetworkSelectorPro
 
           {/* Network Details */}
           <View style={styles.networkDetails}>
-            <Text style={styles.networkName}>{item.name}</Text>
-            <Text style={styles.networkSymbol}>
-              {item.nativeCurrency.symbol} • Chain ID: {item.chainId}
-            </Text>
+            <View style={styles.networkNameRow}>
+              <Text style={styles.networkName}>{item.name}</Text>
+              {item.isTestnet && (
+                <View style={styles.testnetBadge}>
+                  <Text style={styles.testnetBadgeText}>TEST</Text>
+                </View>
+              )}
+            </View>
+            
+            {/* Balance Info - Shows token symbol with balance and NGN value */}
+            {item.isLoading ? (
+              <View style={styles.balanceRow}>
+                <ActivityIndicator size="small" color={colors.textSecondary} />
+                <Text style={styles.networkSymbol}> Loading balance...</Text>
+              </View>
+            ) : (
+              <View style={styles.balanceInfo}>
+                <Text style={styles.balanceAmount}>
+                  {parseFloat(item.balance).toFixed(4)} {item.nativeCurrency.symbol}
+                </Text>
+                <Text style={styles.balanceFiat}>
+                  {formatNGN(item.ngnValue)}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -105,7 +173,7 @@ export default function NetworkSelector({ visible, onClose }: NetworkSelectorPro
             </TouchableOpacity>
           </View>
 
-          {/* Testnet Toggle */}
+          {/* Testnet Toggle - Now for visual indicator only */}
           <View style={styles.testnetToggle}>
             <View style={styles.testnetToggleLeft}>
               <MaterialCommunityIcons
@@ -125,14 +193,38 @@ export default function NetworkSelector({ visible, onClose }: NetworkSelectorPro
             />
           </View>
 
-          {/* Network List */}
-          <FlatList
-            data={availableNetworks}
-            renderItem={renderNetworkItem}
-            keyExtractor={(item) => item.chainId.toString()}
+          {/* Network List with Sections */}
+          <ScrollView
+            style={styles.networkScrollView}
             contentContainerStyle={styles.networkList}
             showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
+          >
+            {/* Mainnets Section */}
+            {mainnetNetworks.length > 0 && (
+              <>
+                {renderSectionHeader('Mainnets', mainnetNetworks.length)}
+                {mainnetNetworks.map(network => (
+                  <View key={network.chainId}>
+                    {renderNetworkItem({ item: network })}
+                  </View>
+                ))}
+              </>
+            )}
+
+            {/* Testnets Section */}
+            {testnetNetworks.length > 0 && (
+              <>
+                {renderSectionHeader('Testnets', testnetNetworks.length)}
+                {testnetNetworks.map(network => (
+                  <View key={network.chainId}>
+                    {renderNetworkItem({ item: network })}
+                  </View>
+                ))}
+              </>
+            )}
+
+            {/* Empty State */}
+            {availableNetworks.length === 0 && (
               <View style={styles.emptyState}>
                 <MaterialCommunityIcons
                   name="web-off"
@@ -140,11 +232,11 @@ export default function NetworkSelector({ visible, onClose }: NetworkSelectorPro
                   color={colors.textSecondary}
                 />
                 <Text style={styles.emptyText}>
-                  No {isTestnet ? 'testnet' : 'mainnet'} networks available
+                  No networks available
                 </Text>
               </View>
-            }
-          />
+            )}
+          </ScrollView>
 
           {/* Add Custom Network Button */}
           <TouchableOpacity style={styles.addNetworkButton}>
@@ -218,6 +310,35 @@ const createStyles = (colors: ThemeColors, isTestnet: boolean) =>
       paddingTop: 16,
       paddingBottom: 8,
     },
+    networkScrollView: {
+      maxHeight: 450,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 12,
+      paddingHorizontal: 4,
+      marginTop: 8,
+    },
+    sectionTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    sectionBadge: {
+      backgroundColor: colors.primary + '20',
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 10,
+    },
+    sectionCount: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.primary,
+    },
     networkItem: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -255,15 +376,50 @@ const createStyles = (colors: ThemeColors, isTestnet: boolean) =>
     networkDetails: {
       flex: 1,
     },
+    networkNameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 2,
+    },
     networkName: {
       fontSize: 16,
       fontWeight: '600',
       color: colors.textPrimary,
-      marginBottom: 2,
+    },
+    testnetBadge: {
+      backgroundColor: colors.warning + '20',
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    testnetBadgeText: {
+      fontSize: 10,
+      fontWeight: '700',
+      color: colors.warning,
     },
     networkSymbol: {
       fontSize: 12,
       color: colors.textSecondary,
+    },
+    balanceRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 2,
+    },
+    balanceInfo: {
+      marginTop: 4,
+    },
+    balanceAmount: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textPrimary,
+      marginBottom: 2,
+    },
+    balanceFiat: {
+      fontSize: 12,
+      color: colors.success,
+      fontWeight: '500',
     },
     emptyState: {
       padding: 32,
