@@ -15,6 +15,9 @@ class SecureWalletStorage {
   private static readonly PASSWORD_HASH_KEY = 'password_hash';
   private static readonly BIOMETRIC_ENABLED_KEY = 'biometric_enabled';
   private static readonly AUTH_TOKEN_KEY = 'auth_token';
+  private static readonly SESSION_VALID_KEY = 'session_valid';
+  private static readonly USER_EMAIL_KEY = 'user_email'; // For display purposes
+  private static readonly LAST_LOGIN_KEY = 'last_login';
 
   /**
    * Hash password using SHA-256
@@ -221,6 +224,49 @@ class SecureWalletStorage {
     await SecureStore.deleteItemAsync(this.PASSWORD_HASH_KEY);
     await SecureStore.deleteItemAsync(this.BIOMETRIC_ENABLED_KEY);
     await SecureStore.deleteItemAsync(this.AUTH_TOKEN_KEY);
+    await SecureStore.deleteItemAsync(this.SESSION_VALID_KEY);
+    await SecureStore.deleteItemAsync(this.USER_EMAIL_KEY);
+    await SecureStore.deleteItemAsync(this.LAST_LOGIN_KEY);
+  }
+
+  /**
+   * Mark session as valid (for biometric login)
+   */
+  static async setSessionValid(valid: boolean): Promise<void> {
+    await SecureStore.setItemAsync(this.SESSION_VALID_KEY, valid.toString());
+    if (valid) {
+      await SecureStore.setItemAsync(this.LAST_LOGIN_KEY, Date.now().toString());
+    }
+  }
+
+  /**
+   * Check if session is valid
+   */
+  static async isSessionValid(): Promise<boolean> {
+    const value = await SecureStore.getItemAsync(this.SESSION_VALID_KEY);
+    return value === 'true';
+  }
+
+  /**
+   * Get last login time
+   */
+  static async getLastLoginTime(): Promise<number> {
+    const value = await SecureStore.getItemAsync(this.LAST_LOGIN_KEY);
+    return value ? parseInt(value, 10) : 0;
+  }
+
+  /**
+   * Store user email/identifier (optional, for display)
+   */
+  static async storeUserEmail(email: string): Promise<void> {
+    await SecureStore.setItemAsync(this.USER_EMAIL_KEY, email);
+  }
+
+  /**
+   * Get user email/identifier
+   */
+  static async getUserEmail(): Promise<string | null> {
+    return await SecureStore.getItemAsync(this.USER_EMAIL_KEY);
   }
 }
 

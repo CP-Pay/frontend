@@ -39,9 +39,24 @@ export default function Index() {
 
   console.log(
     "🚀 Redirecting to:",
-    auth.hasWallet ? "/(tabs)" : "/auth/welcome"
+    auth.hasWallet
+      ? auth.isAuthenticated
+        ? "/(tabs)"
+        : "/auth/unlock"
+      : "/auth/welcome"
   );
 
-  // If user has a wallet, go to tabs (home), otherwise go to welcome screen
-  return <Redirect href={auth.hasWallet ? "/(tabs)" : "/auth/welcome"} />;
+  // Route logic:
+  // - No wallet: go to welcome screen (onboarding)
+  // - Has wallet but locked: go to unlock screen (login)
+  // - Has wallet and authenticated: go to home
+  if (!auth.hasWallet) {
+    return <Redirect href="/auth/welcome" />;
+  }
+
+  if (auth.hasWallet && !auth.isAuthenticated) {
+    return <Redirect href="/auth/unlock" />;
+  }
+
+  return <Redirect href="/(tabs)" />;
 }

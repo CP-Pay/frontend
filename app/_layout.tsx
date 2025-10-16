@@ -3,9 +3,25 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { NetworkProvider } from '@/contexts/NetworkContext';
+import { useAutoLock } from '@/hooks/useAutoLock';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
+
+function AppContent() {
+  // Enable auto-lock functionality
+  useAutoLock();
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="transactions" options={{ headerShown: false }} />
+      <Stack.Screen name="transaction-details" options={{ headerShown: false }} />
+      <Stack.Screen name="notifications" options={{ headerShown: false }} />
+      <Stack.Screen name="auth" options={{ headerShown: false }} />
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   const [appReady, setAppReady] = useState(false);
@@ -33,12 +49,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <NetworkProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="transactions" options={{ headerShown: false }} />
-          <Stack.Screen name="transaction-details" options={{ headerShown: false }} />
-          <Stack.Screen name="notifications" options={{ headerShown: false }} />
-        </Stack>
+        <AppContent />
       </NetworkProvider>
     </ThemeProvider>
   );

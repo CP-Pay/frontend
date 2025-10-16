@@ -280,6 +280,35 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
   // Unlock wallet with password or PIN
   unlockWallet: async (passwordOrPin: string, isPin = false) => {
     try {
+      // If passwordOrPin is empty, check for valid biometric session
+      if (!passwordOrPin || passwordOrPin === '') {
+        const isSessionValid = await SecureWalletStorage.isSessionValid();
+        if (isSessionValid) {
+          // Biometric unlock - just restore session
+          set((state) => ({
+            auth: {
+              ...state.auth,
+              isAuthenticated: true,
+              lastUnlockTime: Date.now(),
+            },
+            wallet: {
+              ...state.wallet,
+              isLocked: false,
+            },
+          }));
+
+          // Mark session as valid
+          await SecureWalletStorage.setSessionValid(true);
+
+          // Fetch latest balances
+          await get().fetchBalances();
+          
+          return true;
+        }
+        return false;
+      }
+
+      // Verify PIN/password
       const isValid = await SecureWalletStorage.verifyPassword(passwordOrPin);
       
       if (!isValid) {
@@ -298,6 +327,9 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
         },
       }));
 
+      // Mark session as valid for biometric
+      await SecureWalletStorage.setSessionValid(true);
+
       // Fetch latest balances
       await get().fetchBalances();
       
@@ -310,6 +342,9 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
 
   // Lock wallet
   lockWallet: () => {
+    // Invalidate session
+    SecureWalletStorage.setSessionValid(false);
+    
     set((state) => ({
       auth: {
         ...state.auth,
