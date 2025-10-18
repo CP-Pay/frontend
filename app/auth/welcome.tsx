@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '@/constants/Colors';
@@ -15,9 +15,10 @@ export default function Welcome() {
       <View style={styles.content}>
         {/* Logo/Icon Area */}
         <View style={styles.logoContainer}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>₿</Text>
-          </View>
+          <Image 
+            source={require('../../assets/images/I_svg.png')} 
+            style={styles.logo}
+          />
           <Text style={styles.appName}>CPPay</Text>
           <Text style={styles.tagline}>Hybrid Crypto-Fiat Wallet</Text>
         </View>
@@ -86,20 +87,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  logoCircle: {
+  logo: {
     width: 100,
     height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(143, 217, 251, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    resizeMode: 'contain',
     marginBottom: 20,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-  },
-  logoText: {
-    fontSize: 48,
-    color: Colors.primary,
   },
   appName: {
     fontSize: 36,
