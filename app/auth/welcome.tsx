@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '@/constants/Colors';
@@ -9,15 +9,16 @@ export default function Welcome() {
 
   return (
     <LinearGradient
-      colors={[Colors.backgroundGradient1, Colors.backgroundGradient2, Colors.backgroundGradient3]}
+      colors={['#FFFFFF', '#FFFFFF', '#FFFFFF']}
       style={styles.container}
     >
       <View style={styles.content}>
         {/* Logo/Icon Area */}
         <View style={styles.logoContainer}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>₿</Text>
-          </View>
+          <Image 
+            source={require('../../assets/images/I_svg.png')} 
+            style={styles.logo}
+          />
           <Text style={styles.appName}>CPPay</Text>
           <Text style={styles.tagline}>Hybrid Crypto-Fiat Wallet</Text>
         </View>
@@ -86,30 +87,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  logoCircle: {
+  logo: {
     width: 100,
     height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(143, 217, 251, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    resizeMode: 'contain',
     marginBottom: 20,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-  },
-  logoText: {
-    fontSize: 48,
-    color: Colors.primary,
   },
   appName: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#000000',
     marginBottom: 8,
   },
   tagline: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#000000',
   },
   featuresContainer: {
     marginBottom: 40,
@@ -122,7 +114,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(143, 217, 251, 0.2)',
+    borderColor: Colors.primary,
   },
   featureIcon: {
     fontSize: 24,
@@ -130,7 +122,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: Colors.primary,
     flex: 1,
     fontWeight: '500',
   },
@@ -169,7 +161,7 @@ const styles = StyleSheet.create({
   termsText: {
     textAlign: 'center',
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: '#000000',
     marginTop: 20,
   },
 });
