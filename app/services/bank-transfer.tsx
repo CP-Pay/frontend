@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -18,32 +19,32 @@ import { spacing, borderRadius } from "@/constants/Typography";
 import { ThemeColors } from "@/constants/Colors";
 import ThemedInput from "@/components/ThemedInput";
 import SelectInput from "@/components/SelectInput";
+import BankTransferService from "@/services/features/BankTransferService";
+import SecureWalletStorage from "@/services/SecureWalletStorage";
+import { useWalletStore } from "@/store/walletStore";
 
-const BANKS = [
-  "Access Bank",
-  "GTBank",
-  "Zenith Bank",
-  "First Bank",
-  "UBA",
-  "Ecobank",
-  "Fidelity Bank",
-  "Union Bank",
-  "Sterling Bank",
-  "Stanbic IBTC",
-  "Wema Bank",
-];
+const BANK_OPTIONS = BankTransferService.getNigerianBanks();
+type BankOption = (typeof BANK_OPTIONS)[number];
 
 export default function BankTransferScreen() {
   const router = useRouter();
-  const [bankName, setBankName] = useState("");
+  const { smartAccount } = useWalletStore();
+  const [selectedBank, setSelectedBank] = useState<BankOption | null>(null);
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
   const [amount, setAmount] = useState("");
   const [narration, setNarration] = useState("");
   const { colors, isDark } = useTheme();
   const styles = createStyles(colors);
+  const [loading, setLoading] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState("");
 
-  const handleVerifyAccount = () => {
+  const handleVerifyAccount = async () => {
+    if (!selectedBank) {
+      Alert.alert("No Bank Selected", "Please choose a destination bank");
+      return;
+    }
+
     if (!accountNumber || accountNumber.length !== 10) {
       Alert.alert(
         "Invalid Account",
@@ -51,20 +52,80 @@ export default function BankTransferScreen() {
       );
       return;
     }
-    // Simulate account verification
-    setAccountName("John Doe");
-    Alert.alert("Account Verified", "John Doe");
+    
+    try {
+      setAccountName("");
+      const verified = await BankTransferService.verifyBankAccount(
+        accountNumber,
+        selectedBank.code
+      );
+
+      setAccountName(verified.accountName);
+      Alert.alert("Account Verified", verified.accountName);
+    } catch (error: any) {
+      console.error("Bank account verification failed:", error);
+      Alert.alert(
+        "Verification Failed",
+        error?.message || "Unable to verify the bank account."
+      );
+    }
   };
 
-  const handleProceed = () => {
-    if (!bankName || !accountNumber || !amount) {
+  const handleProceed = async () => {
+    if (!selectedBank || !accountNumber || !amount) {
       Alert.alert("Missing Information", "Please fill in all required fields");
       return;
     }
-    Alert.alert(
-      "Coming Soon",
-      "Bank transfer will be processed via TransactionService.transferToBank()"
-    );
+
+    if (!smartAccount?.address) {
+      Alert.alert("Error", "Smart Account not initialized");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      setProcessingStatus("Getting credentials...");
+      const privateKey = await SecureWalletStorage.getPrivateKey('password');
+      
+      if (!privateKey) {
+        Alert.alert("Error", "Unable to access wallet credentials");
+        setLoading(false);
+        return;
+      }
+
+      setProcessingStatus("Processing bank transfer...");
+      const result = await BankTransferService.transferToBank({
+        smartWalletAddress: smartAccount.address as `0x${string}`,
+        privateKey: privateKey as `0x${string}`,
+  bankCode: selectedBank.code,
+        accountNumber,
+        accountName,
+        amountNGN: parseFloat(amount),
+        narration,
+        paymentToken: 'USDT',
+      });
+
+      if (result.success) {
+        Alert.alert(
+          "Success! 🎉",
+          `Bank transfer initiated successfully!\n\nTransaction Hash:\n${result.transactionHash?.slice(0, 10)}...${result.transactionHash?.slice(-8)}`,
+          [
+            {
+              text: "OK",
+              onPress: () => router.back(),
+            },
+          ]
+        );
+      } else {
+        Alert.alert("Transfer Failed", result.error || "Transfer failed");
+      }
+    } catch (error: any) {
+      console.error("Bank transfer error:", error);
+      Alert.alert("Error", error.message || "An unexpected error occurred");
+    } finally {
+      setLoading(false);
+      setProcessingStatus("");
+    }
   };
 
   return (
@@ -97,11 +158,18 @@ export default function BankTransferScreen() {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
             <SelectInput
-              options={BANKS.map((b, i) => ({ key: String(i), label: b }))}
-              value={bankName}
-              onSelect={(o) => setBankName(o.label)}
+              options={BANK_OPTIONS.map((bank) => ({
+                key: bank.code,
+                label: bank.name,
+              }))}
+              value={selectedBank?.name}
+              onSelect={(option) => {
+                const bank = BANK_OPTIONS.find((b) => b.code === option.key);
+                setSelectedBank(bank ?? null);
+              }}
               placeholder="Select bank"
               label="Select Bank"
+              searchable
             />
           </View>
 
@@ -153,12 +221,21 @@ export default function BankTransferScreen() {
           <TouchableOpacity
             style={[
               styles.button,
-              (!bankName || !accountNumber || !amount) && styles.buttonDisabled,
+              (!selectedBank || !accountNumber || !amount || loading) && styles.buttonDisabled,
             ]}
             onPress={handleProceed}
-            disabled={!bankName || !accountNumber || !amount}
+            disabled={!selectedBank || !accountNumber || !amount || loading}
           >
-            <Text style={styles.buttonText}>Continue</Text>
+            {loading ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ActivityIndicator color="#FFF" />
+                {processingStatus && (
+                  <Text style={styles.buttonText}>{processingStatus}</Text>
+                )}
+              </View>
+            ) : (
+              <Text style={styles.buttonText}>Transfer to Bank</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>

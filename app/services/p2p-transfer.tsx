@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -16,6 +17,9 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
 import ThemedInput from "@/components/ThemedInput";
+import P2PTransferService from "@/services/features/P2PTransferService";
+import SecureWalletStorage from "@/services/SecureWalletStorage";
+import { useWalletStore } from "@/store/walletStore";
 
 export default function P2PTransferScreen() {
   const router = useRouter();
@@ -23,17 +27,73 @@ export default function P2PTransferScreen() {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const { colors, isDark } = useTheme();
+  const { smartAccount } = useWalletStore();
   const styles = createStyles(colors);
+  const [loading, setLoading] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState("");
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
     if (!recipient || !amount) {
       Alert.alert("Missing Information", "Please fill in all required fields");
       return;
     }
-    Alert.alert(
-      "Coming Soon",
-      "P2P transfer will be processed via TransactionService.transferToCPPayUser()"
-    );
+
+    if (!smartAccount?.address) {
+      Alert.alert("Error", "Smart Account not initialized");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      setProcessingStatus("Validating recipient...");
+      
+      // Validate recipient address/username
+      const validation = await P2PTransferService.validateRecipient(recipient);
+      if (!validation.isValid) {
+        Alert.alert("Invalid Recipient", "Please enter a valid wallet address or username");
+        setLoading(false);
+        return;
+      }
+
+      setProcessingStatus("Getting credentials...");
+      const privateKey = await SecureWalletStorage.getPrivateKey('password');
+      
+      if (!privateKey) {
+        Alert.alert("Error", "Unable to access wallet credentials");
+        setLoading(false);
+        return;
+      }
+
+      setProcessingStatus("Processing transfer...");
+      const result = await P2PTransferService.sendP2P({
+        smartWalletAddress: smartAccount.address as `0x${string}`,
+        privateKey: privateKey as `0x${string}`,
+        recipientAddress: validation.resolvedAddress as `0x${string}`,
+        amountNGN: parseFloat(amount),
+        paymentToken: 'USDT', // Default to USDT
+      });
+
+      if (result.success) {
+        Alert.alert(
+          "Success! 🎉",
+          `Transfer completed successfully!\n\nTransaction Hash:\n${result.transactionHash?.slice(0, 10)}...${result.transactionHash?.slice(-8)}`,
+          [
+            {
+              text: "OK",
+              onPress: () => router.back(),
+            },
+          ]
+        );
+      } else {
+        Alert.alert("Transfer Failed", result.error || "Transfer failed");
+      }
+    } catch (error: any) {
+      console.error("P2P transfer error:", error);
+      Alert.alert("Error", error.message || "An unexpected error occurred");
+    } finally {
+      setLoading(false);
+      setProcessingStatus("");
+    }
   };
 
   return (
@@ -98,12 +158,21 @@ export default function P2PTransferScreen() {
           <TouchableOpacity
             style={[
               styles.button,
-              (!recipient || !amount) && styles.buttonDisabled,
+              (!recipient || !amount || loading) && styles.buttonDisabled,
             ]}
             onPress={handleProceed}
-            disabled={!recipient || !amount}
+            disabled={!recipient || !amount || loading}
           >
-            <Text style={styles.buttonText}>Continue</Text>
+            {loading ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ActivityIndicator color="#FFF" />
+                {processingStatus && (
+                  <Text style={styles.buttonText}>{processingStatus}</Text>
+                )}
+              </View>
+            ) : (
+              <Text style={styles.buttonText}>Send Money</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>

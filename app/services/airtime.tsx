@@ -19,6 +19,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import ThemedInput from "@/components/ThemedInput";
 import { spacing } from "@/constants/Typography";
+import AirtimePurchaseService from "@/services/features/AirtimePurchaseService";
+import SecureWalletStorage from "@/services/SecureWalletStorage";
 
 const NETWORK_OPTIONS = [
   { id: "mtn", name: "MTN", color: "#FFCC00" },
@@ -31,7 +33,7 @@ const QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
 export default function AirtimeScreen() {
   const router = useRouter();
-  const { balances, prices } = useWalletStore();
+  const { balances, prices, smartAccount } = useWalletStore();
   const { colors, isDark } = useTheme();
   const styles = createStyles(colors);
 
@@ -40,7 +42,8 @@ export default function AirtimeScreen() {
   const [amount, setAmount] = useState("");
   const [selectedCrypto, setSelectedCrypto] = useState("ETH");
   const [cryptoNeeded, setCryptoNeeded] = useState(0);
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -62,7 +65,7 @@ export default function AirtimeScreen() {
     })();
   }, [amount, selectedCrypto, prices]);
 
-  const handlePurchase = () => {
+  const handlePurchase = async () => {
     if (!phoneNumber || phoneNumber.length < 11) {
       Alert.alert("Invalid Phone", "Please enter a valid phone number");
       return;
@@ -70,6 +73,12 @@ export default function AirtimeScreen() {
 
     if (!amount || Number(amount) < 50) {
       Alert.alert("Invalid Amount", "Minimum amount is ₦50");
+      return;
+    }
+
+    // Check Smart Account
+    if (!smartAccount?.address) {
+      Alert.alert("Error", "Smart Account not initialized. Please try again.");
       return;
     }
 
@@ -88,17 +97,51 @@ export default function AirtimeScreen() {
       return;
     }
 
-    // Navigate to review screen
-    router.push({
-      pathname: "/services/airtime-review" as any,
-      params: {
-        network: selectedNetwork,
+    setLoading(true);
+    try {
+      setProcessingStatus("Getting credentials...");
+      
+      // TODO: Implement proper PIN prompt for production
+      // For now, using placeholder password - in production, prompt user for PIN
+      const privateKey = await SecureWalletStorage.getPrivateKey('password');
+      
+      if (!privateKey) {
+        Alert.alert("Error", "Unable to access wallet credentials. Please ensure wallet is unlocked.");
+        setLoading(false);
+        return;
+      }
+
+      setProcessingStatus("Processing airtime purchase...");
+      const result = await AirtimePurchaseService.purchaseAirtime({
+        smartWalletAddress: smartAccount.address as `0x${string}`,
+        privateKey: privateKey as `0x${string}`,
         phoneNumber,
-        amountNGN: amount,
-        cryptoSymbol: selectedCrypto,
-        cryptoAmount: cryptoNeeded.toString(),
-      },
-    });
+        amountNGN: parseFloat(amount),
+        provider: selectedNetwork.toUpperCase() as "MTN" | "GLO" | "AIRTEL" | "9MOBILE",
+        paymentToken: selectedCrypto,
+      });
+
+      if (result.success) {
+        Alert.alert(
+          "Success! 🎉",
+          `Airtime purchased successfully!\n\nTransaction Hash:\n${result.transactionHash?.slice(0, 10)}...${result.transactionHash?.slice(-8)}`,
+          [
+            {
+              text: "OK",
+              onPress: () => router.back(),
+            },
+          ]
+        );
+      } else {
+        Alert.alert("Transaction Failed", result.error || "Purchase failed. Please try again.");
+      }
+    } catch (error: any) {
+      console.error("Airtime purchase error:", error);
+      Alert.alert("Error", error.message || "An unexpected error occurred");
+    } finally {
+      setLoading(false);
+      setProcessingStatus("");
+    }
   };
 
   return (
@@ -248,15 +291,20 @@ export default function AirtimeScreen() {
           <TouchableOpacity
             style={[
               styles.purchaseButton,
-              (!phoneNumber || !amount) && styles.purchaseButtonDisabled,
+              (!phoneNumber || !amount || loading) && styles.purchaseButtonDisabled,
             ]}
             onPress={handlePurchase}
             disabled={!phoneNumber || !amount || loading}
           >
             {loading ? (
-              <ActivityIndicator color={colors.textPrimary} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ActivityIndicator color={colors.textPrimary} />
+                {processingStatus && (
+                  <Text style={styles.purchaseButtonText}>{processingStatus}</Text>
+                )}
+              </View>
             ) : (
-              <Text style={styles.purchaseButtonText}>Review Purchase</Text>
+              <Text style={styles.purchaseButtonText}>Purchase Airtime</Text>
             )}
           </TouchableOpacity>
 

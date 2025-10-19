@@ -11,6 +11,21 @@ import PriceService from '@/services/PriceService';
 import SecureWalletStorage from '@/services/SecureWalletStorage';
 
 interface WalletStore extends AppState {
+  // Backend auth state
+  backendAuth: {
+    jwtToken: string | null;
+    userId: string | null;
+    isRegistered: boolean;
+  };
+  
+  // Smart account state
+  smartAccount: {
+    address: string | null;
+    isDeployed: boolean;
+    isInitializing: boolean;
+    error: string | null;
+  };
+  
   // Actions
   initialize: () => Promise<void>;
   createWallet: (mnemonic: string, passwordOrPin: string, isPin?: boolean) => Promise<void>;
@@ -19,8 +34,12 @@ interface WalletStore extends AppState {
   lockWallet: () => void;
   deleteWallet: () => Promise<void>;
   
+  // Backend auth actions
+  registerWithBackend: (walletAddress: string) => Promise<void>;
+  
   // Smart Account actions
   initializeSmartAccount: (privateKey: string, chainId?: number) => Promise<void>;
+  refreshSmartAccountStatus: () => Promise<void>;
   getSmartAccountInfo: () => { address: string | null; isDeployed: boolean };
   
   // Balance actions
@@ -51,6 +70,21 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     lastUnlockTime: 0,
     autoLockDuration: 5 * 60 * 1000, // 5 minutes
     hasWallet: false,
+  },
+  
+  // Backend auth state
+  backendAuth: {
+    jwtToken: null,
+    userId: null,
+    isRegistered: false,
+  },
+  
+  // Smart account state
+  smartAccount: {
+    address: null,
+    isDeployed: false,
+    isInitializing: false,
+    error: null,
   },
   
   wallet: {
@@ -227,6 +261,87 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
       address: state.wallet.smartAccountAddress,
       isDeployed: state.wallet.isSmartAccountDeployed,
     };
+  },
+
+  // Register with backend API
+  registerWithBackend: async (walletAddress: string) => {
+    try {
+      console.log('📡 Registering with backend...');
+      
+      // TODO: Implement backend registration when API is ready
+      // const BackendApiService = await import('@/services/BackendApiService').then(m => m.default);
+      // const response = await BackendApiService.registerUser({
+      //   wallet_address: walletAddress,
+      //   network: 'lisk-sepolia',
+      // });
+      
+      // For now, just set a placeholder
+      set((state) => ({
+        backendAuth: {
+          jwtToken: 'placeholder-token',
+          userId: walletAddress,
+          isRegistered: true,
+        },
+      }));
+      
+      console.log('✅ Backend registration complete (placeholder)');
+    } catch (error) {
+      console.error('❌ Backend registration failed:', error);
+      // Don't throw - allow wallet to work without backend
+      set((state) => ({
+        backendAuth: {
+          jwtToken: null,
+          userId: null,
+          isRegistered: false,
+        },
+      }));
+    }
+  },
+
+  // Refresh smart account status
+  refreshSmartAccountStatus: async () => {
+    try {
+      const state = get();
+      if (!state.wallet.smartAccountAddress) {
+        console.log('No smart account address to refresh');
+        return;
+      }
+
+      console.log('🔄 Refreshing smart account status...');
+      
+      set((prevState) => ({
+        smartAccount: {
+          ...prevState.smartAccount,
+          isInitializing: true,
+          error: null,
+        },
+      }));
+
+      // TODO: Check deployment status when AccountAbstractionService is ready
+      // const AccountAbstractionService = await import('@/services/AccountAbstractionService').then(m => m.default);
+      // const isDeployed = await AccountAbstractionService.isAccountDeployed(state.wallet.smartAccountAddress);
+      
+      set((prevState) => ({
+        smartAccount: {
+          address: state.wallet.smartAccountAddress,
+          isDeployed: state.wallet.isSmartAccountDeployed,
+          isInitializing: false,
+          error: null,
+        },
+      }));
+
+      console.log('✅ Smart account status refreshed');
+    } catch (error) {
+      console.error('❌ Failed to refresh smart account status:', error);
+      
+      set((prevState) => ({
+        smartAccount: {
+          ...prevState.smartAccount,
+          isInitializing: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      }));
+    }
   },
 
   // Import existing wallet

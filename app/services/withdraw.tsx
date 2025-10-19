@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import ThemedInput from "@/components/ThemedInput";
 import SelectInput from "@/components/SelectInput";
@@ -18,24 +19,74 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
 import { user } from "@/data/user";
+import CashWithdrawalService from "@/services/features/CashWithdrawalService";
+import SecureWalletStorage from "@/services/SecureWalletStorage";
+import { useWalletStore } from "@/store/walletStore";
 
 export default function WithdrawScreen() {
   const router = useRouter();
+  const { smartAccount } = useWalletStore();
   const [bankName, setBankName] = useState("");
   const [accountNumber] = useState("");
   const [amount, setAmount] = useState("");
   const { colors, isDark } = useTheme();
   const styles = createStyles(colors);
+  const [loading, setLoading] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState("");
+  const [location, setLocation] = useState<{latitude: number; longitude: number} | null>(null);
 
-  const handleProceed = () => {
-    if (!bankName || !accountNumber || !amount) {
-      Alert.alert("Missing Information", "Please fill in all required fields");
+  const handleProceed = async () => {
+    if (!amount) {
+      Alert.alert("Missing Information", "Please enter withdrawal amount");
       return;
     }
-    Alert.alert(
-      "Coming Soon",
-      "Withdrawal will be processed via TransactionService.withdrawToBank()"
-    );
+
+    if (!smartAccount?.address) {
+      Alert.alert("Error", "Smart Account not initialized");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      setProcessingStatus("Getting credentials...");
+      const privateKey = await SecureWalletStorage.getPrivateKey('password');
+      
+      if (!privateKey) {
+        Alert.alert("Error", "Unable to access wallet credentials");
+        setLoading(false);
+        return;
+      }
+
+      setProcessingStatus("Initiating withdrawal...");
+      const result = await CashWithdrawalService.initiateWithdrawal({
+        smartWalletAddress: smartAccount.address as `0x${string}`,
+        privateKey: privateKey as `0x${string}`,
+        amountNGN: parseFloat(amount),
+        paymentToken: 'USDT',
+        location: location || undefined,
+      });
+
+      if (result.success) {
+        Alert.alert(
+          "Success! 🎉",
+          `Withdrawal initiated!\n\nWithdrawal Code: ${result.withdrawalCode}\n\nShow this code to the merchant.`,
+          [
+            {
+              text: "OK",
+              onPress: () => router.back(),
+            },
+          ]
+        );
+      } else {
+        Alert.alert("Withdrawal Failed", result.error || "Withdrawal failed");
+      }
+    } catch (error: any) {
+      console.error("Withdrawal error:", error);
+      Alert.alert("Error", error.message || "An unexpected error occurred");
+    } finally {
+      setLoading(false);
+      setProcessingStatus("");
+    }
   };
 
   return (
@@ -99,12 +150,21 @@ export default function WithdrawScreen() {
           <TouchableOpacity
             style={[
               styles.button,
-              (!bankName || !amount) && styles.buttonDisabled,
+              (!amount || loading) && styles.buttonDisabled,
             ]}
             onPress={handleProceed}
-            disabled={!bankName || !amount}
+            disabled={!amount || loading}
           >
-            <Text style={styles.buttonText}>Continue</Text>
+            {loading ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ActivityIndicator color="#FFF" />
+                {processingStatus && (
+                  <Text style={styles.buttonText}>{processingStatus}</Text>
+                )}
+              </View>
+            ) : (
+              <Text style={styles.buttonText}>Initiate Withdrawal</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>

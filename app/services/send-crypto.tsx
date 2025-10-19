@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ThemedInput from "@/components/ThemedInput";
@@ -17,30 +18,77 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
 import { useWalletStore } from "@/store/walletStore";
+import CryptoSendService from "@/services/features/CryptoSendService";
+import SecureWalletStorage from "@/services/SecureWalletStorage";
 
 export default function SendCryptoScreen() {
   const router = useRouter();
-  const { wallet } = useWalletStore();
+  const { wallet, smartAccount } = useWalletStore();
   const { colors, isDark } = useTheme();
   const styles = createStyles(colors);
   const walletAny = wallet as any;
   const [selectedToken, setSelectedToken] = useState("USDC");
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState("");
 
   const handleScanQR = () => {
     Alert.alert("QR Scanner", "QR code scanner will be implemented");
   };
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
     if (!recipient || !amount) {
       Alert.alert("Missing Information", "Please fill in all required fields");
       return;
     }
-    Alert.alert(
-      "Coming Soon",
-      "Send crypto will be processed via TransactionService.sendCrypto()"
-    );
+
+    if (!smartAccount?.address) {
+      Alert.alert("Error", "Smart Account not initialized");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      setProcessingStatus("Getting credentials...");
+      const privateKey = await SecureWalletStorage.getPrivateKey('password');
+      
+      if (!privateKey) {
+        Alert.alert("Error", "Unable to access wallet credentials");
+        setLoading(false);
+        return;
+      }
+
+      setProcessingStatus("Sending crypto...");
+      const result = await CryptoSendService.sendCrypto({
+        smartWalletAddress: smartAccount.address as `0x${string}`,
+        privateKey: privateKey as `0x${string}`,
+        recipientAddress: recipient as `0x${string}`,
+        token: selectedToken,
+        amount: amount,
+      });
+
+      if (result.success) {
+        Alert.alert(
+          "Success! 🎉",
+          `Crypto sent successfully!\n\nTransaction Hash:\n${result.transactionHash?.slice(0, 10)}...${result.transactionHash?.slice(-8)}`,
+          [
+            {
+              text: "OK",
+              onPress: () => router.back(),
+            },
+          ]
+        );
+      } else {
+        Alert.alert("Transfer Failed", result.error || "Transfer failed");
+      }
+    } catch (error: any) {
+      console.error("Send crypto error:", error);
+      Alert.alert("Error", error.message || "An unexpected error occurred");
+    } finally {
+      setLoading(false);
+      setProcessingStatus("");
+    }
   };
 
   return (
@@ -162,12 +210,21 @@ export default function SendCryptoScreen() {
           <TouchableOpacity
             style={[
               styles.button,
-              (!recipient || !amount) && styles.buttonDisabled,
+              (!recipient || !amount || loading) && styles.buttonDisabled,
             ]}
             onPress={handleProceed}
-            disabled={!recipient || !amount}
+            disabled={!recipient || !amount || loading}
           >
-            <Text style={styles.buttonText}>Continue</Text>
+            {loading ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ActivityIndicator color="#FFF" />
+                {processingStatus && (
+                  <Text style={styles.buttonText}>{processingStatus}</Text>
+                )}
+              </View>
+            ) : (
+              <Text style={styles.buttonText}>Send Crypto</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>

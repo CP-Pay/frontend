@@ -8,6 +8,7 @@ import {
   TextInput,
   StatusBar,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -17,6 +18,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
+import TokenSwapService from "@/services/features/TokenSwapService";
+import SecureWalletStorage from "@/services/SecureWalletStorage";
+import { useWalletStore } from "@/store/walletStore";
 
 const TOKENS = [
   { symbol: "USDC", name: "USD Coin", balance: "1,250.00" },
@@ -26,12 +30,15 @@ const TOKENS = [
 
 export default function SwapScreen() {
   const router = useRouter();
+  const { smartAccount } = useWalletStore();
   const [fromToken, setFromToken] = useState("USDC");
   const [toToken, setToToken] = useState("USDT");
   const [fromAmount, setFromAmount] = useState("");
   const [toAmount, setToAmount] = useState("");
   const { colors, isDark } = useTheme();
   const styles = createStyles(colors);
+  const [loading, setLoading] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState("");
 
   const handleSwapTokens = () => {
     const temp = fromToken;
@@ -41,15 +48,58 @@ export default function SwapScreen() {
     setToAmount(fromAmount);
   };
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
     if (!fromAmount || Number(fromAmount) <= 0) {
       Alert.alert("Invalid Amount", "Please enter a valid amount");
       return;
     }
-    Alert.alert(
-      "Coming Soon",
-      "Token swap will be processed via TransactionService.swapTokens()"
-    );
+
+    if (!smartAccount?.address) {
+      Alert.alert("Error", "Smart Account not initialized");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      setProcessingStatus("Getting credentials...");
+      const privateKey = await SecureWalletStorage.getPrivateKey('password');
+      
+      if (!privateKey) {
+        Alert.alert("Error", "Unable to access wallet credentials");
+        setLoading(false);
+        return;
+      }
+
+      setProcessingStatus("Swapping tokens...");
+      const result = await TokenSwapService.swapTokens({
+        smartWalletAddress: smartAccount.address as `0x${string}`,
+        privateKey: privateKey as `0x${string}`,
+        fromToken,
+        toToken,
+        amount: fromAmount,
+      });
+
+      if (result.success) {
+        Alert.alert(
+          "Success! 🎉",
+          `Token swap completed!\n\nTransaction Hash:\n${result.transactionHash?.slice(0, 10)}...${result.transactionHash?.slice(-8)}`,
+          [
+            {
+              text: "OK",
+              onPress: () => router.back(),
+            },
+          ]
+        );
+      } else {
+        Alert.alert("Swap Failed", result.error || "Swap failed");
+      }
+    } catch (error: any) {
+      console.error("Token swap error:", error);
+      Alert.alert("Error", error.message || "An unexpected error occurred");
+    } finally {
+      setLoading(false);
+      setProcessingStatus("");
+    }
   };
 
   return (
@@ -195,12 +245,21 @@ export default function SwapScreen() {
           <TouchableOpacity
             style={[
               styles.button,
-              (!fromAmount || Number(fromAmount) <= 0) && styles.buttonDisabled,
+              (!fromAmount || Number(fromAmount) <= 0 || loading) && styles.buttonDisabled,
             ]}
             onPress={handleProceed}
-            disabled={!fromAmount || Number(fromAmount) <= 0}
+            disabled={!fromAmount || Number(fromAmount) <= 0 || loading}
           >
-            <Text style={styles.buttonText}>Swap Tokens</Text>
+            {loading ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ActivityIndicator color="#FFF" />
+                {processingStatus && (
+                  <Text style={styles.buttonText}>{processingStatus}</Text>
+                )}
+              </View>
+            ) : (
+              <Text style={styles.buttonText}>Swap Tokens</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>

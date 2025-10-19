@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ThemedInput from "@/components/ThemedInput";
@@ -17,6 +18,9 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
 import { AirtimeProvider } from "@/types/transaction";
+import DataPurchaseService from "@/services/features/DataPurchaseService";
+import SecureWalletStorage from "@/services/SecureWalletStorage";
+import { useWalletStore } from "@/store/walletStore";
 
 const NETWORKS = [
   {
@@ -84,6 +88,7 @@ const DATA_PLANS = {
 export default function DataScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
+  const { smartAccount } = useWalletStore();
 
   const styles = createStyles(colors);
   const [selectedNetwork, setSelectedNetwork] = useState<AirtimeProvider>(
@@ -91,8 +96,10 @@ export default function DataScreen() {
   );
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState("");
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
     if (!phoneNumber || phoneNumber.length !== 11) {
       Alert.alert("Invalid Number", "Please enter a valid phone number");
       return;
@@ -103,11 +110,64 @@ export default function DataScreen() {
       return;
     }
 
-    // TODO: Navigate to review screen or execute transaction
-    Alert.alert(
-      "Coming Soon",
-      "Data purchase will be processed via TransactionService.purchaseData()"
-    );
+    if (!smartAccount?.address) {
+      Alert.alert("Error", "Smart Account not initialized");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      setProcessingStatus("Getting credentials...");
+      
+      // TODO: Implement proper PIN prompt for production
+      const privateKey = await SecureWalletStorage.getPrivateKey('password');
+      
+      if (!privateKey) {
+        Alert.alert("Error", "Unable to access wallet credentials");
+        setLoading(false);
+        return;
+      }
+
+      setProcessingStatus("Processing data purchase...");
+      
+      // selectedPlan already has the structure from DATA_PLANS
+      if (!selectedPlan.amount) {
+        Alert.alert("Error", "Invalid data plan selected");
+        setLoading(false);
+        return;
+      }
+
+      const result = await DataPurchaseService.purchaseData({
+        smartWalletAddress: smartAccount.address as `0x${string}`,
+        privateKey: privateKey as `0x${string}`,
+        phoneNumber,
+        amountNGN: selectedPlan.amount,
+        provider: selectedNetwork,
+        dataCode: selectedPlan.id, // Use the plan ID as dataCode
+        paymentToken: 'USDT', // Default to USDT
+      });
+
+      if (result.success) {
+        Alert.alert(
+          "Success! 🎉",
+          `Data bundle purchased successfully!\n\nTransaction Hash:\n${result.transactionHash?.slice(0, 10)}...${result.transactionHash?.slice(-8)}`,
+          [
+            {
+              text: "OK",
+              onPress: () => router.back(),
+            },
+          ]
+        );
+      } else {
+        Alert.alert("Transaction Failed", result.error || "Purchase failed");
+      }
+    } catch (error: any) {
+      console.error("Data purchase error:", error);
+      Alert.alert("Error", error.message || "An unexpected error occurred");
+    } finally {
+      setLoading(false);
+      setProcessingStatus("");
+    }
   };
 
   const currentPlans = (DATA_PLANS as any)[selectedNetwork] || [];
@@ -268,15 +328,24 @@ export default function DataScreen() {
           <TouchableOpacity
             style={[
               styles.proceedButton,
-              (!phoneNumber || !selectedPlan || phoneNumber.length !== 11) &&
+              (!phoneNumber || !selectedPlan || phoneNumber.length !== 11 || loading) &&
                 styles.proceedButtonDisabled,
             ]}
             onPress={handleProceed}
             disabled={
-              !phoneNumber || !selectedPlan || phoneNumber.length !== 11
+              !phoneNumber || !selectedPlan || phoneNumber.length !== 11 || loading
             }
           >
-            <Text style={styles.proceedButtonText}>Continue</Text>
+            {loading ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ActivityIndicator color="#FFF" />
+                {processingStatus && (
+                  <Text style={styles.proceedButtonText}>{processingStatus}</Text>
+                )}
+              </View>
+            ) : (
+              <Text style={styles.proceedButtonText}>Purchase Data</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>

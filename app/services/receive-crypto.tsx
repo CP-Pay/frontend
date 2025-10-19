@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Alert,
   Share,
   Clipboard,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -19,26 +20,54 @@ import { ThemeColors } from "@/constants/Colors";
 import { spacing, borderRadius } from "@/constants/Typography";
 import { useWalletStore } from "@/store/walletStore";
 import QRCode from "react-native-qrcode-svg";
+import ReceiveService from "@/services/features/ReceiveService";
 
 export default function ReceiveCryptoScreen() {
   const router = useRouter();
-  const { wallet } = useWalletStore();
+  const { wallet, smartAccount, balances } = useWalletStore();
   const [selectedToken, setSelectedToken] = useState("USDC");
   const { colors, isDark } = useTheme();
   const styles = createStyles(colors);
+  const [receiveInfo, setReceiveInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadReceiveInfo();
+  }, [smartAccount, selectedToken]);
+
+  const loadReceiveInfo = async () => {
+    if (!smartAccount?.address) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const info = await ReceiveService.getReceiveInfo(
+        smartAccount.address as `0x${string}`
+      );
+      setReceiveInfo(info);
+    } catch (error) {
+      console.error("Error loading receive info:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCopyAddress = () => {
-    if (wallet?.address) {
-      Clipboard.setString(wallet.address);
+    const address = smartAccount?.address || wallet?.address;
+    if (address) {
+      Clipboard.setString(address);
       Alert.alert("Copied!", "Wallet address copied to clipboard");
     }
   };
 
   const handleShare = async () => {
-    if (wallet?.address) {
+    const address = smartAccount?.address || wallet?.address;
+    if (address) {
       try {
         await Share.share({
-          message: `Send ${selectedToken} to this address: ${wallet.address}`,
+          message: `Send ${selectedToken} to this address: ${address}`,
         });
       } catch (error) {
         console.error(error);
