@@ -137,6 +137,16 @@ export interface PaymentResult {
   effectiveGasPrice?: string;
 }
 
+export interface PaymentEvent {
+  providerCode: string;
+  account: string;
+  amount: string;
+  refId: string;
+  metadata: string;
+  blockNumber: number;
+  transactionHash: string;
+}
+
 class BillPaymentAdapterService {
   private publicClient: any;
   private contract: any;
@@ -144,32 +154,20 @@ class BillPaymentAdapterService {
   private chainId: number;
 
   constructor(chainId: number) {
+    console.log(`🏗️ MOCK: BillPaymentAdapter initialized for chain ${chainId}`);
     this.chainId = chainId;
-    this.network = NETWORK_CONFIGS[chainId as keyof typeof NETWORK_CONFIGS];
     
-    if (!this.network) {
-      throw new Error(`Unsupported network: ${chainId}`);
-    }
-
-    if (!this.network.billPaymentAdapterAddress || 
-        this.network.billPaymentAdapterAddress === '0x0000000000000000000000000000000000000000') {
-      console.warn(`⚠️ BillPaymentAdapter not deployed on ${this.network.name} - using mock address`);
-      // Use a mock address for testing
-      this.network.billPaymentAdapterAddress = '0x1234567890123456789012345678901234567890' as Address;
-    }
-
-    this.publicClient = createPublicClient({
-      chain: this.network.chain,
-      transport: http(),
-    });
-
-    this.contract = getContract({
-      address: this.network.billPaymentAdapterAddress,
-      abi: BILL_PAYMENT_ADAPTER_ABI,
-      client: this.publicClient,
-    });
-
-    console.log(`🏗️ BillPaymentAdapter initialized for ${this.network.name}`);
+    // Mock network config
+    this.network = {
+      chainId,
+      name: 'Mock Network',
+      billPaymentAdapterAddress: '0x1234567890123456789012345678901234567890',
+      explorerUrl: 'https://mock-explorer.com',
+    };
+    
+    // No real client initialization needed for mocking
+    this.publicClient = {};
+    this.contract = {};
   }
 
   /**
@@ -215,50 +213,26 @@ class BillPaymentAdapterService {
   }
 
   /**
-   * Create call data for submitPayment function
+   * Create call data for submitPayment function (MOCKED)
    */
   createSubmitPaymentCallData(paymentRequest: PaymentRequest): Hex {
-    // Convert string values to bytes32
-    const providerCodeBytes32 = keccak256(toBytes(paymentRequest.providerCode));
-    const refIdBytes32 = keccak256(toBytes(paymentRequest.refId));
+    console.log('🏗️ MOCK: Creating submit payment call data');
     
-    // Encode metadata as bytes
-    const metadataBytes = toHex(toBytes(JSON.stringify(paymentRequest.metadata)));
-    
-    // Create the struct for the contract call
-    const paymentStruct = {
-      providerCode: providerCodeBytes32,
-      account: paymentRequest.account as Address,
-      amount: paymentRequest.amount,
-      refId: refIdBytes32,
-      metadata: metadataBytes,
-    };
-
-    // Encode the function call
-    const callData = encodeFunctionData({
-      abi: BILL_PAYMENT_ADAPTER_ABI,
-      functionName: 'submitPayment',
-      args: [paymentStruct],
-    });
-    
-    return callData;
+    // Return mock call data
+    return '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' as Hex;
   }
 
   /**
-   * Check if a payment has been processed
+   * Check if a payment has been processed (MOCKED)
    */
   async isPaymentProcessed(providerCode: string, refId: string): Promise<boolean> {
-    try {
-      const providerCodeBytes32 = keccak256(toBytes(providerCode));
-      const refIdBytes32 = keccak256(toBytes(refId));
-      
-      const isProcessed = await this.contract.read.isProcessed([providerCodeBytes32, refIdBytes32]);
-      return isProcessed;
-    } catch (error) {
-      console.error('Failed to check payment status:', error);
-      // Return false instead of throwing for better UX
-      return false;
-    }
+    console.log(`🏗️ MOCK: Checking if payment ${refId} is processed`);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Return false to simulate unprocessed payment for testing
+    return false;
   }
 
   /**

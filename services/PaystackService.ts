@@ -2,13 +2,13 @@
  * Frontend Paystack Service
  * Direct integration with Paystack API for bank verification and operations
  * 
- * This service handles Paystack operations directly in the frontend to provide
- * better user experience for crypto-to-naira transactions
+ * MOCKED VERSION FOR TESTING - Real implementation commented out below
+ * This service now provides mock data for all operations to enable end-to-end testing
  */
 
 import axios, { AxiosInstance } from 'axios';
 
-// Paystack API Configuration
+// Paystack API Configuration (currently mocked)
 const PAYSTACK_BASE_URL = 'https://api.paystack.co';
 const PAYSTACK_SECRET_KEY = process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY || 'sk_test_your_secret_key_here';
 
@@ -77,66 +77,88 @@ class PaystackService {
   private client: AxiosInstance;
 
   constructor() {
-    this.client = axios.create({
-      baseURL: PAYSTACK_BASE_URL,
-      headers: {
-        'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 30000,
-    });
-
-    // Add request logging
-    this.client.interceptors.request.use(
-      (config) => {
-        console.log(`🏦 Paystack API: ${config.method?.toUpperCase()} ${config.url}`);
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
-    // Add response logging
-    this.client.interceptors.response.use(
-      (response) => {
-        console.log(`✅ Paystack Response: ${response.status} - ${response.data?.message || 'Success'}`);
-        return response;
-      },
-      (error) => {
-        console.error(`❌ Paystack Error: ${error.response?.status} - ${error.response?.data?.message || error.message}`);
-        return Promise.reject(error);
-      }
-    );
+    // MOCKED: No actual API client needed
+    console.log('🏦 PaystackService initialized in MOCK mode');
+    this.client = {} as AxiosInstance; // Empty object for type compatibility
   }
 
   /**
-   * Get list of Nigerian banks
+   * Get list of Nigerian banks (MOCKED)
    * @returns Promise<NigerianBank[]>
    */
   async getBanks(): Promise<NigerianBank[]> {
-    try {
-      const response = await this.client.get('/bank', {
-        params: {
-          country: 'nigeria',
-          use_cursor: false,
-          perPage: 100,
-        }
-      });
-
-      if (response.data.status && response.data.data) {
-        return response.data.data
-          .filter((bank: NigerianBank) => bank.active && bank.country === 'NG')
-          .sort((a: NigerianBank, b: NigerianBank) => a.name.localeCompare(b.name));
-      }
-
-      throw new Error('Failed to fetch banks from Paystack');
-    } catch (error: any) {
-      console.error('Failed to fetch banks:', error);
-      throw new Error(error.response?.data?.message || 'Failed to fetch banks');
-    }
+    console.log('🏦 MOCK: Getting Nigerian banks...');
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Return mock bank data
+    return [
+      {
+        id: 1,
+        name: 'Access Bank',
+        slug: 'access-bank',
+        code: '044',
+        longcode: '044150149',
+        active: true,
+        country: 'NG',
+        currency: 'NGN',
+        type: 'commercial',
+        is_deleted: false,
+      },
+      {
+        id: 2,
+        name: 'Guaranty Trust Bank',
+        slug: 'guaranty-trust-bank',
+        code: '058',
+        longcode: '058152036',
+        active: true,
+        country: 'NG',
+        currency: 'NGN',
+        type: 'commercial',
+        is_deleted: false,
+      },
+      {
+        id: 3,
+        name: 'First Bank of Nigeria',
+        slug: 'first-bank-of-nigeria',
+        code: '011',
+        longcode: '011151003',
+        active: true,
+        country: 'NG',
+        currency: 'NGN',
+        type: 'commercial',
+        is_deleted: false,
+      },
+      {
+        id: 4,
+        name: 'United Bank For Africa',
+        slug: 'united-bank-for-africa',
+        code: '033',
+        longcode: '033153513',
+        active: true,
+        country: 'NG',
+        currency: 'NGN',
+        type: 'commercial',
+        is_deleted: false,
+      },
+      {
+        id: 5,
+        name: 'Zenith Bank',
+        slug: 'zenith-bank',
+        code: '057',
+        longcode: '057150013',
+        active: true,
+        country: 'NG',
+        currency: 'NGN',
+        type: 'commercial',
+        is_deleted: false,
+      },
+    ];
   }
 
   /**
-   * Verify bank account number
+   * Verify bank account number (MOCKED)
    * @param accountNumber - Bank account number
    * @param bankCode - Bank code from getBanks()
    * @returns Promise<AccountVerificationResult>
@@ -145,50 +167,51 @@ class PaystackService {
     accountNumber: string, 
     bankCode: string
   ): Promise<AccountVerificationResult> {
-    try {
-      if (!accountNumber || accountNumber.length !== 10) {
-        throw new Error('Account number must be exactly 10 digits');
-      }
-
-      if (!bankCode) {
-        throw new Error('Bank code is required');
-      }
-
-      const response = await this.client.get('/bank/resolve', {
-        params: {
-          account_number: accountNumber,
-          bank_code: bankCode,
-        }
-      });
-
-      if (response.data.status && response.data.data) {
-        const data = response.data.data;
-        return {
-          account_number: data.account_number,
-          account_name: data.account_name,
-          bank_id: data.bank_id,
-          bank_name: data.bank_name,
-        };
-      }
-
-      throw new Error(response.data.message || 'Account verification failed');
-    } catch (error: any) {
-      console.error('Bank account verification failed:', error);
-      
-      if (error.response?.status === 422) {
-        throw new Error('Invalid account number or bank code');
-      }
-      
-      throw new Error(
-        error.response?.data?.message || 
-        error.message || 
-        'Failed to verify bank account'
-      );
+    console.log(`🏦 MOCK: Verifying account ${accountNumber} for bank code ${bankCode}`);
+    
+    if (!accountNumber || accountNumber.length !== 10) {
+      throw new Error('Account number must be exactly 10 digits');
     }
+
+    if (!bankCode) {
+      throw new Error('Bank code is required');
+    }
+
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Mock account names based on different scenarios
+    const mockNames = [
+      'JOHN DOE SMITH',
+      'MARY JANE JOHNSON',
+      'AHMED BELLO HASSAN',
+      'CHINWE OKAFOR',
+      'IBRAHIM MUSA',
+    ];
+    
+    const bankNames = {
+      '044': 'Access Bank',
+      '058': 'Guaranty Trust Bank', 
+      '011': 'First Bank of Nigeria',
+      '033': 'United Bank For Africa',
+      '057': 'Zenith Bank',
+    };
+    
+    // Generate consistent mock name based on account number
+    const nameIndex = parseInt(accountNumber.slice(-1)) % mockNames.length;
+    const accountName = mockNames[nameIndex];
+    const bankName = bankNames[bankCode as keyof typeof bankNames] || 'Mock Bank';
+    
+    return {
+      account_number: accountNumber,
+      account_name: accountName,
+      bank_id: parseInt(bankCode),
+      bank_name: bankName,
+    };
   }
 
   /**
-   * Create transfer recipient for future transfers
+   * Create transfer recipient for future transfers (MOCKED)
    * @param accountNumber - Bank account number  
    * @param bankCode - Bank code
    * @param accountName - Account holder name (optional)
@@ -199,38 +222,42 @@ class PaystackService {
     bankCode: string,
     accountName?: string
   ): Promise<TransferRecipient> {
-    try {
-      // First verify the account to get account name if not provided
-      if (!accountName) {
-        const verification = await this.verifyBankAccount(accountNumber, bankCode);
-        accountName = verification.account_name;
-      }
-
-      const response = await this.client.post('/transferrecipient', {
-        type: 'nuban',
-        name: accountName,
-        account_number: accountNumber,
-        bank_code: bankCode,
-        currency: 'NGN',
-      });
-
-      if (response.data.status && response.data.data) {
-        return response.data.data;
-      }
-
-      throw new Error(response.data.message || 'Failed to create transfer recipient');
-    } catch (error: any) {
-      console.error('Failed to create transfer recipient:', error);
-      throw new Error(
-        error.response?.data?.message || 
-        error.message || 
-        'Failed to create transfer recipient'
-      );
+    console.log(`🏦 MOCK: Creating transfer recipient for ${accountNumber}`);
+    
+    // First verify the account to get account name if not provided
+    if (!accountName) {
+      const verification = await this.verifyBankAccount(accountNumber, bankCode);
+      accountName = verification.account_name;
     }
+
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Return mock transfer recipient
+    return {
+      active: true,
+      createdAt: new Date().toISOString(),
+      currency: 'NGN',
+      domain: 'test',
+      id: Math.floor(Math.random() * 100000),
+      integration: 123456,
+      name: accountName,
+      recipient_code: `RCP_mock${Date.now()}`,
+      type: 'nuban',
+      updatedAt: new Date().toISOString(),
+      is_deleted: false,
+      details: {
+        authorization_code: undefined,
+        account_number: accountNumber,
+        account_name: accountName,
+        bank_code: bankCode,
+        bank_name: `Mock Bank ${bankCode}`,
+      },
+    };
   }
 
   /**
-   * Initiate bank transfer
+   * Initiate bank transfer (MOCKED)
    * @param recipientCode - Recipient code from createTransferRecipient
    * @param amount - Amount in naira (will be converted to kobo)
    * @param reason - Transfer reason/memo
@@ -243,92 +270,78 @@ class PaystackService {
     reason: string,
     reference: string
   ): Promise<TransferInitiation> {
-    try {
-      const amountInKobo = Math.round(amount * 100);
-
-      const response = await this.client.post('/transfer', {
-        source: 'balance',
-        amount: amountInKobo,
-        recipient: recipientCode,
-        reason: reason,
-        currency: 'NGN',
-        reference: reference,
-      });
-
-      if (response.data.status && response.data.data) {
-        return response.data.data;
-      }
-
-      throw new Error(response.data.message || 'Failed to initiate transfer');
-    } catch (error: any) {
-      console.error('Failed to initiate transfer:', error);
-      throw new Error(
-        error.response?.data?.message || 
-        error.message || 
-        'Failed to initiate transfer'
-      );
-    }
+    console.log(`🏦 MOCK: Initiating transfer of ₦${amount} with reference ${reference}`);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    
+    const amountInKobo = Math.round(amount * 100);
+    
+    // Return mock transfer initiation
+    return {
+      integration: 123456,
+      domain: 'test',
+      amount: amountInKobo,
+      currency: 'NGN',
+      source: 'balance',
+      reason: reason,
+      recipient: Math.floor(Math.random() * 100000),
+      status: 'success',
+      reference: reference,
+      transfer_code: `TRF_mock${Date.now()}`,
+      id: Math.floor(Math.random() * 1000000),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
   }
 
   /**
-   * Verify transfer status
+   * Verify transfer status (MOCKED)
    * @param reference - Transfer reference
    * @returns Promise<any>
    */
   async verifyTransfer(reference: string): Promise<any> {
-    try {
-      const response = await this.client.get(`/transfer/verify/${reference}`);
-
-      if (response.data.status) {
-        return response.data.data;
-      }
-
-      throw new Error(response.data.message || 'Transfer verification failed');
-    } catch (error: any) {
-      console.error('Failed to verify transfer:', error);
-      throw new Error(
-        error.response?.data?.message || 
-        error.message || 
-        'Failed to verify transfer'
-      );
-    }
+    console.log(`🏦 MOCK: Verifying transfer ${reference}`);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 600));
+    
+    return {
+      reference: reference,
+      status: 'success',
+      amount: Math.floor(Math.random() * 100000) + 1000,
+      currency: 'NGN',
+      transfer_code: `TRF_mock${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
   }
 
   /**
-   * Get transfer fees
+   * Get transfer fees (MOCKED)
    * @param amount - Amount in naira
    * @returns Promise<{ fee: number, currency: string }>
    */
   async getTransferFees(amount: number): Promise<{ fee: number, currency: string }> {
-    try {
-      const amountInKobo = Math.round(amount * 100);
-      
-      const response = await this.client.get('/transfer/check_balance');
-      
-      // Paystack typically has a flat fee structure
-      // For now, we'll calculate a reasonable fee
-      let fee = 0;
-      
-      if (amount <= 5000) {
-        fee = 10; // ₦10 for amounts up to ₦5,000
-      } else if (amount <= 50000) {
-        fee = 25; // ₦25 for amounts up to ₦50,000
-      } else {
-        fee = 50; // ₦50 for amounts above ₦50,000
-      }
-
-      return {
-        fee: fee,
-        currency: 'NGN'
-      };
-    } catch (error: any) {
-      console.error('Failed to get transfer fees:', error);
-      // Return default fee structure if API call fails
-      return {
-        fee: amount > 5000 ? 25 : 10,
-        currency: 'NGN'
-      };
+    console.log(`🏦 MOCK: Getting transfer fees for ₦${amount}`);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Mock fee calculation
+    let fee = 0;
+    
+    if (amount <= 5000) {
+      fee = 10; // ₦10 for amounts up to ₦5,000
+    } else if (amount <= 50000) {
+      fee = 25; // ₦25 for amounts up to ₦50,000
+    } else {
+      fee = 50; // ₦50 for amounts above ₦50,000
     }
+
+    return {
+      fee: fee,
+      currency: 'NGN'
+    };
   }
 
   /**

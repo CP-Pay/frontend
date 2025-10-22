@@ -34,7 +34,7 @@ import { Colors } from '@/constants/Colors';
 import PaystackService, { NigerianBank, AccountVerificationResult } from '@/services/PaystackService';
 import TokenBalanceService from '@/services/TokenBalanceService';
 import SmartAccountService from '@/services/SmartAccountService';
-import { PriceService } from '@/services/PriceService';
+import PriceService from '@/services/PriceService';
 import SecureWalletStorage from '@/services/SecureWalletStorage';
 import EnhancedUserOpService from '@/services/EnhancedUserOpService';
 import MockTreasuryService from '@/services/MockTreasuryService';
@@ -658,7 +658,7 @@ export default function CryptoToNairaScreen() {
 
   return (
     <LinearGradient
-      colors={[colors.background || '#1a1a1a', colors.backgroundSecondary || '#2a2a2a']}
+      colors={[colors.background || '#1a1a1a', colors.cardBackground || '#2a2a2a']}
       style={styles.container}
     >
       <KeyboardAvoidingView
@@ -810,7 +810,7 @@ const TokenSelectionModal = ({
                 <Text style={styles.tokenSymbol}>{token.symbol}</Text>
                 <Text style={styles.tokenName}>{token.name}</Text>
               </View>
-              <View style={styles.tokenBalance}>
+              <View style={styles.tokenBalanceContainer}>
                 <Text style={styles.tokenBalanceAmount}>{parseFloat(token.balance).toFixed(4)}</Text>
                 <Text style={styles.tokenBalanceUSD}>${parseFloat(token.balanceUSD).toFixed(2)}</Text>
               </View>
@@ -1140,6 +1140,9 @@ const createStyles = (colors: any) => StyleSheet.create({
   tokenName: {
     fontSize: 14,
     color: colors.textSecondary,
+  },
+  tokenBalanceContainer: {
+    alignItems: 'flex-end',
   },
   tokenBalanceAmount: {
     fontSize: 16,

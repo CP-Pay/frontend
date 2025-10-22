@@ -10,7 +10,7 @@
  */
 
 import PaystackService from './PaystackService';
-import { PriceService } from './PriceService';
+import PriceService from './PriceService';
 
 export interface TreasuryTransaction {
   id: string;

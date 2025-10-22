@@ -1,6 +1,8 @@
 /**
- * Token Balance Service
- * Handles fetching token balances for the smart wallet
+ * Token Balance Service (MOCKED)
+ * Fetches and manages token balances for different chains and tokens
+ * 
+ * MOCKED VERSION FOR TESTING - Real implementation commented out below
  */
 
 import { createPublicClient, http, formatUnits, parseUnits } from 'viem';
@@ -211,7 +213,7 @@ export function formatCurrency(
  */
 class TokenBalanceService {
   /**
-   * Get portfolio balances compatible with crypto-to-naira interface
+   * Get portfolio balances compatible with crypto-to-naira interface (MOCKED)
    */
   static async getPortfolioBalances(address: string): Promise<{
     symbol: string;
@@ -222,43 +224,54 @@ class TokenBalanceService {
     decimals: number;
     logo?: string;
   }[]> {
-    try {
-      // For now, use Lisk Sepolia testnet (chainId 4202)
-      const chainId = 4202;
-      const balances = await fetchTokenBalances(address, chainId);
-      
-      // Transform to expected format
-      return balances.map(balance => ({
-        symbol: balance.token.symbol,
-        name: balance.token.name,
-        balance: balance.balance,
-        balanceUSD: balance.balanceUSD.toFixed(2),
-        address: balance.token.address || '', // Native tokens don't have address
-        decimals: balance.token.decimals,
-        logo: balance.token.logoURI,
-      }));
-    } catch (error) {
-      console.error('Failed to get portfolio balances:', error);
-      // Return mock data for testing
-      return [
-        {
-          symbol: 'ETH',
-          name: 'Ethereum',
-          balance: '0.5',
-          balanceUSD: '1000.00',
-          address: '',
-          decimals: 18,
-        },
-        {
-          symbol: 'USDC',
-          name: 'USD Coin',
-          balance: '500',
-          balanceUSD: '500.00',
-          address: '0xa0b86a33e6cc8e4c44a5d8b8b2e8f8c8b8c8b8c8',
-          decimals: 6,
-        },
-      ];
-    }
+    console.log(`🔄 MOCK: Getting portfolio balances for ${address}`);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Return realistic mock data for testing
+    const mockBalances = [
+      {
+        symbol: 'ETH',
+        name: 'Ethereum',
+        balance: '0.15',
+        balance: '0.15',
+        balanceUSD: '456.78',
+        address: '0x0000000000000000000000000000000000000000',
+        decimals: 18,
+        logo: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+      },
+      {
+        symbol: 'USDC',
+        name: 'USD Coin',
+        balance: '250.50',
+        balanceUSD: '250.50',
+        address: '0x79A02482A880bCE3F13e09Da970dC34db4CD24d1',
+        decimals: 6,
+        logo: 'https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png',
+      },
+      {
+        symbol: 'USDT',
+        name: 'Tether USD',
+        balance: '150.25',
+        balanceUSD: '150.25',
+        address: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06',
+        decimals: 6,
+        logo: 'https://assets.coingecko.com/coins/images/325/small/Tether-logo.png',
+      },
+      {
+        symbol: 'WETH',
+        name: 'Wrapped Ethereum',
+        balance: '0.08',
+        balanceUSD: '243.84',
+        address: '0x05D032ac25d322df992303dCa074EE7392C117b9',
+        decimals: 18,
+        logo: 'https://assets.coingecko.com/coins/images/2518/small/weth.png',
+      }
+    ];
+    
+    console.log(`✅ MOCK Portfolio loaded: ${mockBalances.length} tokens with balance`);
+    return mockBalances;
   }
 }
 

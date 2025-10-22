@@ -12,7 +12,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fetchTokenBalances, type TokenBalance } from '@/services/TokenBalanceService';
+import TokenBalanceService, { type TokenBalance } from '@/services/TokenBalanceService';
 
 interface NetworkBalances {
   [address: string]: {
@@ -88,86 +88,94 @@ export const useBalanceStore = create<BalanceState>()(
       /**
        * Update balances in background (non-blocking)
        */
-      updateBalances: async (chainId: number, address: string, force: boolean = false): Promise<void> => {
-        const state = get();
-        
-        // Skip if already updating
-        if (state.isUpdating(chainId, address)) {
-          return;
-        }
-        
-        // Skip if recently updated (rate limiting)
-        const networkData = state.networkBalances[chainId];
-        const addressData = networkData?.[address];
-        if (!force && addressData?.lastUpdated) {
-          const timeSinceUpdate = Date.now() - addressData.lastUpdated;
-          if (timeSinceUpdate < state.minUpdateInterval) {
-            console.log(`⏱️ Skipping balance update - too recent (${Math.round(timeSinceUpdate / 1000)}s ago)`);
-            return;
+  updateBalances: async (chainId: number, address: string, force?: boolean) => {
+    const now = Date.now();
+    const state = get();
+    
+    // Check if we should skip update
+    const chainBalances = state.networkBalances[chainId]?.[address];
+    if (!force && chainBalances) {
+      const timeSinceUpdate = now - chainBalances.lastUpdated;
+      if (timeSinceUpdate < state.minUpdateInterval) {
+        console.log(`⏳ Skipping update, too soon (${timeSinceUpdate}ms < ${state.minUpdateInterval}ms)`);
+        return;
+      }
+    }
+    
+    // Set updating state
+    set(state => ({
+      networkBalances: {
+        ...state.networkBalances,
+        [chainId]: {
+          ...state.networkBalances[chainId],
+          [address]: {
+            ...state.networkBalances[chainId]?.[address],
+            balances: state.networkBalances[chainId]?.[address]?.balances || [],
+            lastUpdated: state.networkBalances[chainId]?.[address]?.lastUpdated || 0,
+            isUpdating: true,
           }
         }
-        
-        // Set updating flag
-        set((state) => ({
-          networkBalances: {
-            ...state.networkBalances,
-            [chainId]: {
-              ...state.networkBalances[chainId],
-              [address]: {
-                ...state.networkBalances[chainId]?.[address],
-                balances: state.networkBalances[chainId]?.[address]?.balances || [],
-                lastUpdated: state.networkBalances[chainId]?.[address]?.lastUpdated || 0,
-                isUpdating: true,
-              },
-            },
-          },
-        }));
-        
-        try {
-          console.log(`🔄 Updating balances for ${address} on chain ${chainId}`);
-          
-          // Fetch new balances
-          const newBalances = await fetchTokenBalances(address, chainId);
-          
-          // Update store
-          set((state) => ({
-            networkBalances: {
-              ...state.networkBalances,
-              [chainId]: {
-                ...state.networkBalances[chainId],
-                [address]: {
-                  balances: newBalances,
-                  lastUpdated: Date.now(),
-                  isUpdating: false,
-                },
-              },
-            },
-          }));
-          
-          console.log(`✅ Updated balances for ${address} on chain ${chainId}`);
-          
-        } catch (error) {
-          console.error(`❌ Failed to update balances for ${address}:`, error);
-          
-          // Clear updating flag on error
-          set((state) => ({
-            networkBalances: {
-              ...state.networkBalances,
-              [chainId]: {
-                ...state.networkBalances[chainId],
-                [address]: {
-                  ...state.networkBalances[chainId]?.[address],
-                  balances: state.networkBalances[chainId]?.[address]?.balances || [],
-                  lastUpdated: state.networkBalances[chainId]?.[address]?.lastUpdated || 0,
-                  isUpdating: false,
-                },
-              },
-            },
-          }));
-        }
-      },
+      }
+    }));
+    
+    try {
+      // Get mocked portfolio balances
+      const portfolioBalances = await TokenBalanceService.getPortfolioBalances(address);
       
-      /**
+      // Convert portfolio format to TokenBalance format
+      const tokenBalances: TokenBalance[] = portfolioBalances.map(balance => ({
+        token: {
+          symbol: balance.symbol,
+          name: balance.name,
+          decimals: balance.decimals,
+          logoUrl: balance.logo || '',
+          isNative: balance.symbol === 'ETH',
+          addresses: {
+            [chainId]: balance.address
+          }
+        },
+        balance: balance.balance,
+        balanceRaw: BigInt(Math.floor(parseFloat(balance.balance) * Math.pow(10, balance.decimals))),
+        balanceUSD: parseFloat(balance.balanceUSD),
+        balanceNGN: parseFloat(balance.balanceUSD) * 450, // Convert USD to NGN
+      }));
+      
+      // Update store with converted balances
+      set(state => ({
+        networkBalances: {
+          ...state.networkBalances,
+          [chainId]: {
+            ...state.networkBalances[chainId],
+            [address]: {
+              balances: tokenBalances,
+              lastUpdated: now,
+              isUpdating: false,
+            }
+          }
+        }
+      }));
+      
+      console.log(`✅ Updated balances for chain ${chainId}, address ${address}: ${tokenBalances.length} tokens`);
+    } catch (error: any) {
+      console.error('Failed to update balances:', error);
+      
+      // Clear updating state on error
+      set(state => ({
+        networkBalances: {
+          ...state.networkBalances,
+          [chainId]: {
+            ...state.networkBalances[chainId],
+            [address]: {
+              ...state.networkBalances[chainId]?.[address],
+              balances: state.networkBalances[chainId]?.[address]?.balances || [],
+              lastUpdated: state.networkBalances[chainId]?.[address]?.lastUpdated || 0,
+              isUpdating: false,
+            }
+          }
+        }
+      }));
+    }
+  },      /**
        * Manually set balances (for initial data or external updates)
        */
       setBalances: (chainId: number, address: string, balances: TokenBalance[]): void => {

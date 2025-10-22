@@ -2,8 +2,8 @@ import axios from 'axios';
 import { PriceData } from '@/types/wallet';
 
 /**
- * PriceService - Handles cryptocurrency price fetching and conversion
- * Uses CoinGecko API for real-time pricing
+ * PriceService - Handles cryptocurrency price fetching and conversion (MOCKED)
+ * MOCKED VERSION FOR TESTING - Real implementation commented out below
  */
 class PriceService {
   private static readonly COINGECKO_API = 'https://api.coingecko.com/api/v3';
@@ -32,119 +32,112 @@ class PriceService {
   }
 
   /**
-   * Fetch token price in USD and NGN
+   * Get token price in specified currency (compatible with old interface)
    */
-  static async fetchTokenPrice(symbol: string): Promise<PriceData> {
-    const cacheKey = symbol.toUpperCase();
-    const cached = this.priceCache.get(cacheKey);
-
-    // Return cached data if still valid
-    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
-      return cached.data;
+  static async getTokenPrice(symbol: string, currency: string = 'usd'): Promise<{ price: string }> {
+    console.log(`💰 MOCK: Getting ${symbol} price in ${currency}`);
+    
+    const priceData = await this.fetchTokenPrice(symbol);
+    
+    let priceValue: number;
+    if (currency.toLowerCase() === 'ngn') {
+      priceValue = priceData.ngn;
+    } else {
+      priceValue = priceData.usd;
     }
-
-    try {
-      const id = this.symbolToId(symbol);
-      const response = await axios.get(`${this.COINGECKO_API}/simple/price`, {
-        params: {
-          ids: id,
-          vs_currencies: 'usd,ngn',
-          include_24hr_change: 'true',
-        },
-      });
-
-      const data = response.data[id];
-      if (!data) {
-        throw new Error(`Price data not found for ${symbol}`);
-      }
-
-      const priceData: PriceData = {
-        usd: data.usd || 0,
-        ngn: data.ngn || 0,
-        change24h: data.usd_24h_change || 0,
-        lastUpdated: Date.now(),
-      };
-
-      // Cache the result
-      this.priceCache.set(cacheKey, { data: priceData, timestamp: Date.now() });
-
-      return priceData;
-    } catch (error) {
-      console.error(`Failed to fetch price for ${symbol}:`, error);
-      
-      // Return cached data if available, even if expired
-      if (cached) {
-        return cached.data;
-      }
-
-      // Return zero prices as fallback
-      return {
-        usd: 0,
-        ngn: 0,
-        change24h: 0,
-        lastUpdated: Date.now(),
-      };
-    }
+    
+    return {
+      price: priceValue.toString()
+    };
   }
 
   /**
-   * Fetch multiple token prices at once
+   * Fetch token price in USD and NGN (MOCKED)
+   */
+  static async fetchTokenPrice(symbol: string): Promise<PriceData> {
+    console.log(`💰 MOCK: Fetching price for ${symbol}`);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Mock prices with realistic data
+    const mockPrices: { [key: string]: PriceData } = {
+      'ETH': {
+        usd: 3045.67,
+        ngn: 4890720, // ~₦4.89M per ETH at current rates
+        change24h: 2.45,
+        lastUpdated: Date.now(),
+      },
+      'USDC': {
+        usd: 1.00,
+        ngn: 1606, // ~₦1,606 per USDC
+        change24h: 0.02,
+        lastUpdated: Date.now(),
+      },
+      'USDT': {
+        usd: 0.9999,
+        ngn: 1605.4,
+        change24h: -0.01,
+        lastUpdated: Date.now(),
+      },
+      'WETH': {
+        usd: 3045.67,
+        ngn: 4890720,
+        change24h: 2.45,
+        lastUpdated: Date.now(),
+      },
+      'BTC': {
+        usd: 97850.23,
+        ngn: 157153469,
+        change24h: 1.87,
+        lastUpdated: Date.now(),
+      },
+    };
+    
+    const symbolUpper = symbol.toUpperCase();
+    const priceData = mockPrices[symbolUpper] || {
+      usd: 1.0,
+      ngn: 1606,
+      change24h: 0,
+      lastUpdated: Date.now(),
+    };
+
+    // Cache the result
+    this.priceCache.set(symbolUpper, { data: priceData, timestamp: Date.now() });
+    
+    console.log(`💰 MOCK: ${symbol} = $${priceData.usd} / ₦${priceData.ngn.toLocaleString()}`);
+    return priceData;
+  }
+
+  /**
+   * Fetch multiple token prices at once (MOCKED)
    */
   static async fetchMultiplePrices(
     symbols: string[]
   ): Promise<{ [symbol: string]: PriceData }> {
+    console.log(`💰 MOCK: Fetching multiple prices for ${symbols.join(', ')}`);
+    
     const prices: { [symbol: string]: PriceData } = {};
-
-    try {
-      const ids = symbols.map(s => this.symbolToId(s)).join(',');
-      const response = await axios.get(`${this.COINGECKO_API}/simple/price`, {
-        params: {
-          ids: ids,
-          vs_currencies: 'usd,ngn',
-          include_24hr_change: 'true',
-        },
-      });
-
-      for (const symbol of symbols) {
-        const id = this.symbolToId(symbol);
-        const data = response.data[id];
-
-        if (data) {
-          const priceData: PriceData = {
-            usd: data.usd || 0,
-            ngn: data.ngn || 0,
-            change24h: data.usd_24h_change || 0,
-            lastUpdated: Date.now(),
-          };
-
-          prices[symbol.toUpperCase()] = priceData;
-          this.priceCache.set(symbol.toUpperCase(), { 
-            data: priceData, 
-            timestamp: Date.now() 
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch multiple prices:', error);
+    
+    // Get prices for each symbol using our mock function
+    for (const symbol of symbols) {
+      prices[symbol] = await this.fetchTokenPrice(symbol);
     }
 
     return prices;
   }
 
   /**
-   * Fetch NGN/USD exchange rate
+   * Fetch NGN/USD exchange rate (MOCKED)
    */
   static async fetchNGNRate(): Promise<number> {
-    try {
-      // Using a backup free API for exchange rates
-      const response = await axios.get(
-        'https://api.exchangerate-api.com/v4/latest/USD'
-      );
-      return response.data.rates.NGN || 1600; // Fallback to ~1600 NGN/USD
-    } catch (error) {
-      console.error('Failed to fetch NGN rate:', error);
-      return 1600; // Fallback rate
-    }
+    console.log('💰 MOCK: Getting NGN/USD exchange rate');
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // Return realistic mock rate
+    return 1606; // Current approximate rate
   }
 
   /**
