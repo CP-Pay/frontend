@@ -14,6 +14,7 @@ import { user } from "@/data/user";
 import { useWalletStore } from "@/store/walletStore";
 import { fetchTokenBalances, type TokenBalance } from "@/services/TokenBalanceService";
 import { useBalances } from "@/hooks/useBalances";
+import SecureWalletStorage from "@/services/SecureWalletStorage";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState, useEffect } from "react";
@@ -31,8 +32,23 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function HomeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { wallet, initializeSmartAccount } = useWalletStore();
+  const { wallet, auth, initializeSmartAccount } = useWalletStore();
   const { currentNetwork, selectedToken, setSelectedToken, isTestnet } = useNetwork();
+  
+  // Check if wallet is locked and redirect to unlock screen
+  useEffect(() => {
+    if (auth.hasWallet && wallet.isLocked) {
+      console.log('🔒 Wallet is locked, redirecting to unlock screen');
+      router.replace('/auth/unlock' as any);
+      return;
+    }
+    
+    if (!auth.hasWallet) {
+      console.log('📱 No wallet found, redirecting to welcome screen');
+      router.replace('/auth/welcome' as any);
+      return;
+    }
+  }, [auth.hasWallet, wallet.isLocked, router]);
   
   // New balance system - always shows cached data, updates in background
   const {
@@ -43,7 +59,7 @@ export default function HomeScreen() {
     refresh: refreshBalances,
     lastUpdated,
   } = useBalances({
-    address: wallet.address, // Use EOA address for real balances
+    address: wallet.address || undefined, // Use EOA address for real balances
     chainId: currentNetwork.chainId,
     autoRefresh: true, // Auto-refresh when stale
     refreshOnMount: true, // Refresh on component mount if needed
@@ -66,10 +82,14 @@ export default function HomeScreen() {
 
   const handleRetrySmartAccount = async () => {
     try {
-      // Get private key from secure storage and reinitialize
-      const privateKey = await import('@/services/SecureWalletStorage').then(
-        (mod) => mod.default.getPrivateKey('password')
-      );
+      // This should only be called when wallet is unlocked
+      if (wallet.isLocked) {
+        console.log('Cannot retry smart account - wallet is locked');
+        return;
+      }
+      
+      // Get private key from secure storage using the current session
+      const privateKey = await SecureWalletStorage.getPrivateKey(''); // Empty string for biometric session
       if (privateKey) {
         await initializeSmartAccount(privateKey);
       }
@@ -87,14 +107,14 @@ export default function HomeScreen() {
       onPress: () => router.push("/crypto-to-naira" as any),
     },
     {
-      icon: "bank-transfer",
-      label: "NGN to CPPay",
-      onPress: () => router.push("/services/p2p-transfer" as any),
+      icon: "layers",
+      label: "Batch Payment",
+      onPress: () => router.push("/services/batch-payment" as any),
     },
     {
-      icon: "bank",
-      label: "NGN to Bank",
-      onPress: () => router.push("/services/bank-transfer" as any),
+      icon: "calendar-multiple",
+      label: "Scheduled Payment",
+      onPress: () => router.push("/services/scheduled-payments" as any),
     },
     {
       icon: "send",
@@ -299,7 +319,7 @@ export default function HomeScreen() {
           <TokenList
             balances={tokenBalances}
             isLoading={isLoadingBalances && tokenBalances.length === 0}
-            showAll={showAllTokens}
+            showAllTokens={showAllTokens}
             onTokenPress={(balance) => {
               // Navigate to token details
               console.log('Token pressed:', balance.token.symbol);

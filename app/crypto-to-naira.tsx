@@ -38,6 +38,7 @@ import PriceService from '@/services/PriceService';
 import SecureWalletStorage from '@/services/SecureWalletStorage';
 import EnhancedUserOpService from '@/services/EnhancedUserOpService';
 import MockTreasuryService from '@/services/MockTreasuryService';
+import { useWalletStore } from '@/store/walletStore';
 
 // Types
 interface TokenBalance {
@@ -415,9 +416,9 @@ export default function CryptoToNairaScreen() {
     setTransactionStatus('Monitoring blockchain confirmation...');
     
     // Poll treasury service for transaction updates
-    const maxWaitTime = 300000; // 5 minutes
+    const maxWaitTime = 60000; // 1 minute (reduced from 5 minutes)
     const startTime = Date.now();
-    const pollInterval = 5000; // 5 seconds
+    const pollInterval = 1000; // 1 second (reduced from 5 seconds)
     
     while (Date.now() - startTime < maxWaitTime) {
       const treasuryTx = MockTreasuryService.getTransaction(treasuryTransactionId);
@@ -443,6 +444,11 @@ export default function CryptoToNairaScreen() {
         case 'completed':
           setTransactionStatus('Transaction completed successfully 🎉');
           updateStepStatus(5, true, false);
+          setShowTransactionModal(false); // Close modal when complete
+          
+          // Update transaction history and balances
+          await updateTransactionHistoryAndBalances(userOperationHash, treasuryTransactionId);
+          
           return; // Transaction complete
         case 'failed':
           throw new Error(treasuryTx.error || 'Transaction failed');
@@ -453,6 +459,111 @@ export default function CryptoToNairaScreen() {
     }
     
     throw new Error('Transaction monitoring timeout');
+  };
+
+  // Update transaction history and balances after successful transaction
+  const updateTransactionHistoryAndBalances = async (
+    userOperationHash: string,
+    treasuryTransactionId: string
+  ) => {
+    try {
+      console.log('📝 Updating transaction history and balances...');
+      
+      // Get treasury transaction details
+      const treasuryTx = MockTreasuryService.getTransaction(treasuryTransactionId);
+      if (!treasuryTx) {
+        console.error('Treasury transaction not found');
+        return;
+      }
+      
+      // Get wallet store instance
+      const walletStore = useWalletStore.getState();
+      
+      // Create transaction record
+      const transaction = {
+        id: `crypto_to_naira_${userOperationHash}`,
+        type: 'crypto_to_naira' as const,
+        status: 'completed' as const,
+        from: walletStore.wallet.address || '',
+        to: `${selectedBank.code}:${accountNumber}`,
+        amount: parseFloat(nairaAmount),
+        currency: 'NGN',
+        token: selectedToken.symbol,
+        tokenAmount: cryptoAmount,
+        timestamp: Date.now(),
+        hash: userOperationHash,
+        memo: memo || `Crypto to Naira: ${selectedToken.symbol} → ₦${nairaAmount}`,
+        network: 'ethereum',
+        gasUsed: gasEstimate,
+        gasPrice: 0,
+        fees: {
+          network: gasEstimate,
+          platform: treasuryTx.fees.paystackFee,
+          total: gasEstimate + treasuryTx.fees.paystackFee,
+        },
+        recipient: {
+          bankCode: selectedBank.code,
+          accountNumber: accountNumber,
+          accountName: verifiedAccount?.account_name || accountName,
+        },
+        exchangeRate: exchangeRate,
+      };
+
+      // Add transaction to the store
+      walletStore.addTransaction(transaction);
+
+      // Update token balances
+      await updateTokenBalances(selectedToken.symbol, totalCryptoNeeded);
+      
+      console.log('✅ Added crypto-to-naira transaction to history');
+    } catch (error) {
+      console.error('❌ Failed to update transaction history:', error);
+      // Don't throw error as this is not critical for the main flow
+    }
+  };
+
+  /**
+   * Update token balances after transaction
+   */
+  const updateTokenBalances = async (tokenSymbol: string, amountUsed: number) => {
+    try {
+      console.log(`💰 Updating ${tokenSymbol} balance: -${amountUsed}`);
+      
+      // Get current balances
+      const walletStore = useWalletStore.getState();
+      const currentBalances = await TokenBalanceService.getTokenBalances(
+        walletStore.wallet.address || '',
+        1 // Ethereum mainnet
+      );
+      
+      // Find the token and update its balance
+      const updatedBalances = currentBalances.map(balance => {
+        if (balance.token.symbol === tokenSymbol) {
+          return {
+            ...balance,
+            balance: Math.max(0, balance.balance - amountUsed), // Ensure balance doesn't go negative
+            lastUpdated: Date.now(),
+          };
+        }
+        return balance;
+      });
+      
+      // Update the store with new balances
+      walletStore.set((state) => ({
+        balances: {
+          ...state.balances,
+          tokens: updatedBalances,
+          lastUpdated: Date.now(),
+        },
+      }));
+      
+      // Recalculate total balances
+      walletStore.calculateTotalBalance();
+      
+      console.log(`✅ Updated ${tokenSymbol} balance`);
+    } catch (error) {
+      console.error('❌ Failed to update token balances:', error);
+    }
   };
 
   // UI Rendering Methods

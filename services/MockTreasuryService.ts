@@ -65,8 +65,119 @@ export interface TreasuryTransaction {
   maxRetries: number;
 }
 
+export interface BatchTreasuryTransaction {
+  id: string;
+  userOperationHash: string;
+  type: 'batch_crypto_to_naira';
+  status: 'pending' | 'crypto_received' | 'processing' | 'completed' | 'failed';
+  
+  // Crypto details
+  cryptoToken: string;
+  totalCryptoAmount: number;
+  totalCryptoValue: number;
+  senderAddress: string;
+  
+  // Batch details
+  totalFiatAmount: number;
+  fiatCurrency: string;
+  recipients: Array<{
+    id: string;
+    bankCode: string;
+    accountNumber: string;
+    accountName: string;
+    nairaAmount: number;
+    memo?: string;
+    status: 'pending' | 'processing' | 'completed' | 'failed';
+    error?: string;
+  }>;
+  
+  // Progress tracking
+  completedRecipients: number;
+  totalRecipients: number;
+  currentRecipient?: string;
+  
+  // Timestamps
+  createdAt: number;
+  cryptoReceivedAt?: number;
+  completedAt?: number;
+  
+  // Metadata
+  memo?: string;
+  exchangeRate?: number;
+  fees: {
+    cryptoNetworkFee: number;
+    conversionFee: number;
+    paystackFee: number;
+    cppayFee: number;
+  };
+  
+  // Error handling
+  error?: string;
+  retryCount: number;
+  maxRetries: number;
+}
+
+export interface ScheduledTreasuryTransaction {
+  id: string;
+  userOperationHash?: string;
+  type: 'scheduled_crypto_to_naira';
+  status: 'scheduled' | 'executing' | 'crypto_received' | 'fiat_processing' | 'fiat_sent' | 'completed' | 'failed' | 'cancelled';
+  
+  // Crypto details
+  cryptoToken: string;
+  cryptoAmount: number;
+  cryptoValue: number;
+  senderAddress: string;
+  
+  // Fiat details
+  fiatAmount: number;
+  fiatCurrency: string;
+  
+  // Recipient details
+  recipientData: {
+    bankCode: string;
+    accountNumber: string;
+    accountName: string;
+  };
+  
+  // Scheduling details
+  scheduledDate: number;
+  executionDate?: number;
+  isRecurring: boolean;
+  recurringInterval?: 'daily' | 'weekly' | 'monthly';
+  recurringEndDate?: number;
+  nextExecutionDate?: number;
+  
+  // Payment tracking
+  paystackReference?: string;
+  paystackRecipientCode?: string;
+  
+  // Timestamps
+  createdAt: number;
+  cryptoReceivedAt?: number;
+  fiatSentAt?: number;
+  completedAt?: number;
+  
+  // Metadata
+  memo?: string;
+  exchangeRate?: number;
+  fees: {
+    cryptoNetworkFee: number;
+    conversionFee: number;
+    paystackFee: number;
+    cppayFee: number;
+  };
+  
+  // Error handling
+  error?: string;
+  retryCount: number;
+  maxRetries: number;
+}
+
 class MockTreasuryService {
   private transactions: Map<string, TreasuryTransaction> = new Map();
+  private batchTransactions: Map<string, BatchTreasuryTransaction> = new Map();
+  private scheduledTransactions: Map<string, ScheduledTreasuryTransaction> = new Map();
   private processingInterval: NodeJS.Timeout | null = null;
   
   // Treasury configuration
@@ -74,10 +185,10 @@ class MockTreasuryService {
   private readonly CONVERSION_FEE_PERCENTAGE = 0.5; // 0.5% conversion fee
   private readonly CPPAY_FEE_PERCENTAGE = 1.0; // 1% CPPay service fee
   
-  // Processing delays (in milliseconds)
-  private readonly CRYPTO_CONFIRMATION_DELAY = 30000; // 30 seconds
-  private readonly FIAT_PROCESSING_DELAY = 60000; // 1 minute
-  private readonly PAYMENT_EXECUTION_DELAY = 45000; // 45 seconds
+  // Processing delays (in milliseconds) - Optimized for better UX
+  private readonly CRYPTO_CONFIRMATION_DELAY = 3000; // 3 seconds (was 30 seconds)
+  private readonly FIAT_PROCESSING_DELAY = 2000; // 2 seconds (was 60 seconds)
+  private readonly PAYMENT_EXECUTION_DELAY = 2000; // 2 seconds (was 45 seconds)
 
   constructor() {
     console.log('🏦 Mock Treasury Service initialized');
@@ -235,6 +346,193 @@ class MockTreasuryService {
    */
   getAllTransactions(): TreasuryTransaction[] {
     return Array.from(this.transactions.values());
+  }
+
+  /**
+   * Register a batch crypto-to-naira transaction
+   */
+  async registerBatchCryptoToNairaTransaction(
+    batchId: string,
+    userOperationHash: string,
+    cryptoToken: string,
+    totalCryptoAmount: number,
+    senderAddress: string,
+    totalNairaAmount: number,
+    recipients: Array<{
+      id: string;
+      bankCode: string;
+      accountNumber: string;
+      accountName: string;
+      nairaAmount: number;
+      memo?: string;
+    }>,
+    memo?: string
+  ): Promise<BatchTreasuryTransaction> {
+    // Get current exchange rate
+    const tokenPrice = await PriceService.getTokenPrice(cryptoToken, 'ngn');
+    const exchangeRate = parseFloat(tokenPrice.price);
+    const totalCryptoValue = totalCryptoAmount * exchangeRate;
+    
+    // Calculate fees
+    const cryptoNetworkFee = this.estimateNetworkFee(cryptoToken);
+    const conversionFee = totalCryptoValue * (this.CONVERSION_FEE_PERCENTAGE / 100);
+    const paystackFee = await this.getPaystackFee(totalNairaAmount);
+    const cppayFee = totalNairaAmount * (this.CPPAY_FEE_PERCENTAGE / 100);
+    
+    const batchTransaction: BatchTreasuryTransaction = {
+      id: batchId,
+      userOperationHash,
+      type: 'batch_crypto_to_naira',
+      status: 'pending',
+      cryptoToken,
+      totalCryptoAmount,
+      totalCryptoValue,
+      senderAddress,
+      totalFiatAmount: totalNairaAmount,
+      fiatCurrency: 'NGN',
+      recipients: recipients.map(recipient => ({
+        ...recipient,
+        status: 'pending' as const,
+      })),
+      completedRecipients: 0,
+      totalRecipients: recipients.length,
+      createdAt: Date.now(),
+      memo,
+      exchangeRate,
+      fees: {
+        cryptoNetworkFee,
+        conversionFee,
+        paystackFee,
+        cppayFee,
+      },
+      retryCount: 0,
+      maxRetries: 3,
+    };
+
+    this.batchTransactions.set(batchId, batchTransaction);
+    
+    console.log(`📝 Registered batch crypto-to-naira transaction: ${batchId}`);
+    console.log(`   ${totalCryptoAmount} ${cryptoToken} → ₦${totalNairaAmount} (${recipients.length} recipients)`);
+    
+    return batchTransaction;
+  }
+
+  /**
+   * Register a scheduled crypto-to-naira transaction
+   */
+  async registerScheduledCryptoToNairaTransaction(
+    scheduledId: string,
+    userOperationHash: string,
+    cryptoToken: string,
+    cryptoAmount: number,
+    senderAddress: string,
+    nairaAmount: number,
+    recipient: {
+      bankCode: string;
+      accountNumber: string;
+      accountName: string;
+    },
+    scheduledDate: Date,
+    isRecurring: boolean,
+    recurringInterval?: 'daily' | 'weekly' | 'monthly',
+    recurringEndDate?: Date,
+    memo?: string
+  ): Promise<ScheduledTreasuryTransaction> {
+    // Get current exchange rate
+    const tokenPrice = await PriceService.getTokenPrice(cryptoToken, 'ngn');
+    const exchangeRate = parseFloat(tokenPrice.price);
+    const cryptoValue = cryptoAmount * exchangeRate;
+    
+    // Calculate fees
+    const cryptoNetworkFee = this.estimateNetworkFee(cryptoToken);
+    const conversionFee = cryptoValue * (this.CONVERSION_FEE_PERCENTAGE / 100);
+    const paystackFee = await this.getPaystackFee(nairaAmount);
+    const cppayFee = nairaAmount * (this.CPPAY_FEE_PERCENTAGE / 100);
+    
+    const scheduledTransaction: ScheduledTreasuryTransaction = {
+      id: scheduledId,
+      userOperationHash,
+      type: 'scheduled_crypto_to_naira',
+      status: 'scheduled',
+      cryptoToken,
+      cryptoAmount,
+      cryptoValue,
+      senderAddress,
+      fiatAmount: nairaAmount,
+      fiatCurrency: 'NGN',
+      recipientData: {
+        bankCode: recipient.bankCode,
+        accountNumber: recipient.accountNumber,
+        accountName: recipient.accountName,
+      },
+      scheduledDate: scheduledDate.getTime(),
+      isRecurring,
+      recurringInterval,
+      recurringEndDate: recurringEndDate?.getTime(),
+      nextExecutionDate: scheduledDate.getTime(),
+      createdAt: Date.now(),
+      memo,
+      exchangeRate,
+      fees: {
+        cryptoNetworkFee,
+        conversionFee,
+        paystackFee,
+        cppayFee,
+      },
+      retryCount: 0,
+      maxRetries: 3,
+    };
+
+    this.scheduledTransactions.set(scheduledId, scheduledTransaction);
+    
+    console.log(`📝 Registered scheduled crypto-to-naira transaction: ${scheduledId}`);
+    console.log(`   ${cryptoAmount} ${cryptoToken} → ₦${nairaAmount}`);
+    console.log(`   Scheduled for: ${scheduledDate.toISOString()}`);
+    console.log(`   Recurring: ${isRecurring ? recurringInterval : 'No'}`);
+    
+    return scheduledTransaction;
+  }
+
+  /**
+   * Get batch transaction by ID
+   */
+  getBatchTransaction(batchId: string): BatchTreasuryTransaction | undefined {
+    return this.batchTransactions.get(batchId);
+  }
+
+  /**
+   * Get scheduled transaction by ID
+   */
+  getScheduledTransaction(scheduledId: string): ScheduledTreasuryTransaction | undefined {
+    return this.scheduledTransactions.get(scheduledId);
+  }
+
+  /**
+   * Update batch transaction
+   */
+  updateBatchTransaction(batchTransaction: BatchTreasuryTransaction): void {
+    this.batchTransactions.set(batchTransaction.id, batchTransaction);
+  }
+
+  /**
+   * Update scheduled transaction
+   */
+  updateScheduledTransaction(scheduledTransaction: ScheduledTreasuryTransaction): void {
+    this.scheduledTransactions.set(scheduledTransaction.id, scheduledTransaction);
+  }
+
+  /**
+   * Get all batch transactions
+   */
+  getAllBatchTransactions(): BatchTreasuryTransaction[] {
+    return Array.from(this.batchTransactions.values());
+  }
+
+  /**
+   * Get all scheduled transactions
+   */
+  getAllScheduledTransactions(): ScheduledTreasuryTransaction[] {
+    return Array.from(this.scheduledTransactions.values());
   }
 
   /**

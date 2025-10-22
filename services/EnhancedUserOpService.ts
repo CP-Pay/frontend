@@ -73,6 +73,45 @@ class EnhancedUserOpService {
   }
 
   /**
+   * Create and execute batch crypto-to-naira transaction (MOCKED)
+   */
+  async executeBatchCryptoToNairaTransaction(
+    totalNairaAmount: number,
+    recipients: Array<{
+      bankCode: string;
+      accountNumber: string;
+      accountName: string;
+      amount: number;
+    }>,
+    cryptoDetails: {
+      token: string;
+      amount: number;
+    },
+    memo?: string,
+    usePaymaster: boolean = true
+  ): Promise<UserOperationResult> {
+    console.log('📦 MOCK: Creating batch crypto-to-naira transaction...');
+    console.log(`💰 MOCK: Converting ${cryptoDetails.amount} ${cryptoDetails.token} to ₦${totalNairaAmount}`);
+    console.log(`👥 MOCK: Recipients: ${recipients.length}`);
+    
+    recipients.forEach((recipient, index) => {
+      console.log(`   ${index + 1}. ${recipient.accountName} (${recipient.accountNumber}) - ₦${recipient.amount}`);
+    });
+    
+    // Simulate realistic delays for batch processing
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    const mockUserOpHash = keccak256(
+      toBytes(`mock-batch-userop-${Date.now()}-${totalNairaAmount}-${recipients.length}`)
+    );
+
+    return {
+      userOperationHash: mockUserOpHash,
+      status: 'submitted',
+    };
+  }
+
+  /**
    * Wait for UserOperation confirmation (MOCKED)
    */
   async waitForUserOperationReceipt(
