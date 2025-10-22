@@ -62,12 +62,12 @@ export default function SetupBiometricScreen() {
         await setBiometric(true);
 
         Alert.alert(
-          "Success! 🎉",
-          "Your wallet has been created successfully!",
+          "Wallet Created! 🎉",
+          "Your wallet and smart accounts have been created successfully!",
           [
             {
-              text: "Get Started",
-              onPress: () => router.replace("/(tabs)" as any),
+              text: "Continue",
+              onPress: () => router.push("/auth/email-registration" as any),
             },
           ]
         );
@@ -85,10 +85,10 @@ export default function SetupBiometricScreen() {
       // Create wallet with PIN only (isPin = true)
       await createWallet(mnemonic, pin, true);
 
-      Alert.alert("Success! 🎉", "Your wallet has been created successfully!", [
+      Alert.alert("Wallet Created! 🎉", "Your wallet and smart accounts have been created successfully!", [
         {
-          text: "Get Started",
-          onPress: () => router.replace("/(tabs)" as any),
+          text: "Continue",
+          onPress: () => router.push("/auth/email-registration" as any),
         },
       ]);
     } catch (error: any) {

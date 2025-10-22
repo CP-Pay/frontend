@@ -40,12 +40,12 @@ export default function ConfirmPinScreen() {
               await importWallet(walletData, originalPin, isPrivateKey, true);
 
               Alert.alert(
-                "Success! 🎉",
-                "Your wallet has been imported successfully!",
+                "Wallet Imported! 🎉",
+                "Your wallet and smart accounts have been imported successfully!",
                 [
                   {
-                    text: "Get Started",
-                    onPress: () => router.replace("/(tabs)" as any),
+                    text: "Continue",
+                    onPress: () => router.push("/auth/email-registration" as any),
                   },
                 ]
               );

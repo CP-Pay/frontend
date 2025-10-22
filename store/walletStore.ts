@@ -9,6 +9,8 @@ import {
 import WalletService from '@/services/WalletService';
 import PriceService from '@/services/PriceService';
 import SecureWalletStorage from '@/services/SecureWalletStorage';
+import SmartAccountService, { SmartAccountInfo } from '@/services/SmartAccountService';
+import BackendApiService from '@/services/BackendApiService';
 
 interface WalletStore extends AppState {
   // Backend auth state
@@ -35,9 +37,12 @@ interface WalletStore extends AppState {
   deleteWallet: () => Promise<void>;
   
   // Backend auth actions
-  registerWithBackend: (walletAddress: string) => Promise<void>;
+  registerWithBackend: (email: string, password: string, phoneNumber?: string) => Promise<void>;
+  registerWalletsWithBackend: () => Promise<any[]>;
   
-  // Smart Account actions
+  // Smart Account actions  
+  generateSmartAccounts: () => Promise<SmartAccountInfo[]>;
+  getSmartAccountAddress: (chainId: number) => Promise<string | null>;
   initializeSmartAccount: (privateKey: string, chainId?: number) => Promise<void>;
   refreshSmartAccountStatus: () => Promise<void>;
   getSmartAccountInfo: () => { address: string | null; isDeployed: boolean };
@@ -218,8 +223,8 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
         },
       }));
 
-      // Create smart account automatically
-      await get().initializeSmartAccount(walletData.privateKey);
+      // Generate smart accounts for all networks
+      await get().generateSmartAccounts();
 
       // Fetch initial balances
       await get().fetchBalances();
@@ -229,25 +234,70 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     }
   },
 
-  // Initialize smart account from EOA
-  initializeSmartAccount: async (privateKey: string, chainId = 1) => {
+  // Generate smart accounts for all networks
+  generateSmartAccounts: async () => {
+    const state = get();
+    if (!state.wallet.address) {
+      throw new Error('No wallet address found');
+    }
+
     try {
-      console.log('🔧 Initializing smart account...');
+      console.log('🔧 Generating smart accounts for all networks...');
       
-      const smartAccountData = await WalletService.createSmartAccountFromSigner(
-        privateKey,
-        chainId
+      const smartAccounts = await SmartAccountService.generateSmartAccountsAllNetworks(
+        state.wallet.address
       );
 
-      set((state) => ({
-        wallet: {
-          ...state.wallet,
-          smartAccountAddress: smartAccountData.smartAccountAddress,
-          isSmartAccountDeployed: smartAccountData.isDeployed,
-        },
-      }));
+      // Store the primary smart account (Lisk Sepolia for testing)
+      const primarySmartAccount = smartAccounts.find(sa => sa.chainId === 4202) || smartAccounts[0];
+      
+      if (primarySmartAccount) {
+        // Store in state
+        set((state) => ({
+          wallet: {
+            ...state.wallet,
+            smartAccountAddress: primarySmartAccount.address,
+            isSmartAccountDeployed: primarySmartAccount.isDeployed,
+          },
+        }));
 
-      console.log('✅ Smart account initialized:', smartAccountData.smartAccountAddress);
+        // Persist smart account addresses in secure storage
+        await SecureWalletStorage.storeSmartAccountAddress(primarySmartAccount.address);
+        await SecureWalletStorage.setSmartAccountDeployed(primarySmartAccount.isDeployed);
+        
+        // Store all smart accounts for network-specific retrieval
+        await SecureWalletStorage.setItem('smart_accounts', JSON.stringify(smartAccounts));
+      }
+
+      console.log(`✅ Generated ${smartAccounts.length} smart accounts`);
+      return smartAccounts;
+    } catch (error) {
+      console.error('❌ Failed to generate smart accounts:', error);
+      throw error;
+    }
+  },
+
+  // Get smart account address for specific network
+  getSmartAccountAddress: async (chainId: number) => {
+    try {
+      const smartAccountsJson = await SecureWalletStorage.getItem('smart_accounts');
+      if (!smartAccountsJson) return null;
+
+      const smartAccounts = JSON.parse(smartAccountsJson);
+      const account = smartAccounts.find((sa: any) => sa.chainId === chainId);
+      return account?.address || null;
+    } catch (error) {
+      console.error('Failed to get smart account address:', error);
+      return null;
+    }
+  },
+
+  // Initialize smart account (legacy method, now calls generateSmartAccounts)
+  initializeSmartAccount: async (privateKey: string, chainId = 4202) => {
+    try {
+      console.log('🔧 Initializing smart account...');
+      await get().generateSmartAccounts();
+      console.log('✅ Smart account initialized');
     } catch (error) {
       console.error('❌ Failed to initialize smart account:', error);
       throw error;
@@ -263,38 +313,58 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     };
   },
 
-  // Register with backend API
-  registerWithBackend: async (walletAddress: string) => {
+  // Register user with backend
+  registerWithBackend: async (email: string, password: string, phoneNumber?: string) => {
     try {
-      console.log('📡 Registering with backend...');
+      console.log('📡 Registering user with backend...');
       
-      // TODO: Implement backend registration when API is ready
-      // const BackendApiService = await import('@/services/BackendApiService').then(m => m.default);
-      // const response = await BackendApiService.registerUser({
-      //   wallet_address: walletAddress,
-      //   network: 'lisk-sepolia',
-      // });
+      const response = await BackendApiService.register({
+        email,
+        password,
+        phone_number: phoneNumber,
+      });
       
-      // For now, just set a placeholder
+      console.log('✅ User registered with backend');
+      
+      // Login to get tokens
+      const loginResponse = await BackendApiService.login({ email, password });
+      
       set((state) => ({
         backendAuth: {
-          jwtToken: 'placeholder-token',
-          userId: walletAddress,
+          jwtToken: loginResponse.access_token,
+          userId: email, // Use email as user ID
           isRegistered: true,
         },
       }));
       
-      console.log('✅ Backend registration complete (placeholder)');
+      console.log('✅ Backend authentication complete');
     } catch (error) {
       console.error('❌ Backend registration failed:', error);
-      // Don't throw - allow wallet to work without backend
-      set((state) => ({
-        backendAuth: {
-          jwtToken: null,
-          userId: null,
-          isRegistered: false,
-        },
-      }));
+      throw error;
+    }
+  },
+
+  // Register wallets with backend for all networks
+  registerWalletsWithBackend: async () => {
+    const state = get();
+    
+    if (!state.backendAuth.isRegistered || !state.wallet.address) {
+      throw new Error('User must be registered and have wallet before registering wallets');
+    }
+
+    try {
+      console.log('📡 Registering wallets with backend...');
+      
+      const results = await BackendApiService.registerWalletAllNetworks(
+        state.wallet.address,
+        state.wallet.smartAccountAddress || undefined
+      );
+      
+      console.log(`✅ Registered wallet on ${results.filter(r => r.success).length} networks`);
+      return results;
+    } catch (error) {
+      console.error('❌ Failed to register wallets with backend:', error);
+      throw error;
     }
   },
 
@@ -381,8 +451,8 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
         },
       }));
 
-      // Create smart account automatically
-      await get().initializeSmartAccount(walletData.privateKey);
+      // Generate smart accounts for all networks
+      await get().generateSmartAccounts();
 
       // Fetch initial balances
       await get().fetchBalances();

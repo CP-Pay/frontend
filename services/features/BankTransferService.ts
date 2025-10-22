@@ -39,16 +39,6 @@ export interface BankAccountVerificationResult {
   bankCode: string;
 }
 
-interface FlutterwaveAccountLookupResponse {
-  status?: string;
-  message?: string;
-  data?: {
-    account_number?: string;
-    account_name?: string;
-    bank_code?: string;
-  };
-}
-
 class BankTransferService {
   /**
    * Resolve account number against backend (Flutterwave) API
@@ -61,20 +51,22 @@ class BankTransferService {
       const response = await BackendApiService.verifyBankAccount(
         accountNumber,
         bankCode
-      ) as FlutterwaveAccountLookupResponse;
+      ) as {
+        valid?: boolean;
+        account_name?: string;
+        detail?: string;
+        message?: string;
+      };
 
-      const status = response?.status?.toLowerCase();
-      const accountName = response?.data?.account_name;
-
-      if (status !== 'success' || !accountName) {
-        throw new Error(response?.message || 'Account verification failed');
+      if (!response?.valid || !response.account_name) {
+        throw new Error(response?.detail || response?.message || 'Account verification failed');
       }
 
       return {
         success: true,
-        accountName,
-        accountNumber: response.data?.account_number ?? accountNumber,
-        bankCode: response.data?.bank_code ?? bankCode,
+        accountName: response.account_name,
+        accountNumber,
+        bankCode,
       };
     } catch (error: any) {
       throw new Error(error?.message || 'Failed to verify bank account');

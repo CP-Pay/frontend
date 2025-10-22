@@ -28,6 +28,7 @@ interface BalanceCardProps {
   interestToday?: number;
   isLoading?: boolean;
   holdings?: TokenHolding[];
+  lastUpdated?: number | null;
 }
 
 export const BalanceCard: React.FC<BalanceCardProps> = ({
@@ -43,6 +44,7 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
   interestToday,
   isLoading = false,
   holdings = [],
+  lastUpdated,
 }) => {
   const { colors } = useTheme();
   const [showBreakdown, setShowBreakdown] = useState(false);
@@ -68,6 +70,22 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value);
+  };
+
+  const formatRelativeTime = (timestamp: number) => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    if (seconds < 30) return 'just now';
+    if (seconds < 60) return `${seconds}s ago`;
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
   };
 
   const renderContent = () => (
@@ -128,7 +146,7 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.textPrimary} />
           <Text style={[styles.loadingText, { color: colors.textPrimary }]}>
-            Calculating portfolio...
+            Updating balance...
           </Text>
         </View>
       ) : (
@@ -137,11 +155,19 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
             {formatCurrency(balance)}
           </Text>
 
-          {holdings.length > 0 && (
-            <Text style={[styles.holdingsCount, { color: colors.textPrimary }]}>
-              {holdings.length} token{holdings.length !== 1 ? 's' : ''} across multiple networks
-            </Text>
-          )}
+          <View style={styles.bottomInfo}>
+            {holdings.length > 0 && (
+              <Text style={[styles.holdingsCount, { color: colors.textPrimary }]}>
+                {holdings.length} token{holdings.length !== 1 ? 's' : ''} across multiple networks
+              </Text>
+            )}
+            
+            {lastUpdated && (
+              <Text style={[styles.lastUpdated, { color: colors.textSecondary }]}>
+                Updated {formatRelativeTime(lastUpdated)}
+              </Text>
+            )}
+          </View>
         </>
       )}
 
@@ -321,7 +347,9 @@ const styles = StyleSheet.create({
   historyButton: { flexDirection: "row", alignItems: "center" },
   historyText: { fontSize: 12, marginRight: 2 },
   amount: { fontSize: 34, fontWeight: "800", marginBottom: spacing.xs },
-  holdingsCount: { fontSize: 12, opacity: 0.85, marginBottom: spacing.md },
+  bottomInfo: { marginBottom: spacing.md },
+  holdingsCount: { fontSize: 12, opacity: 0.85, marginBottom: spacing.xs },
+  lastUpdated: { fontSize: 10, opacity: 0.7 },
   emptyMessage: { fontSize: 14, textAlign: "center", marginTop: spacing.sm, fontStyle: "italic", opacity: 0.7 },
   loadingContainer: { alignItems: "center", paddingVertical: spacing.xl },
   loadingText: { marginTop: spacing.sm, fontSize: 14, opacity: 0.85 },

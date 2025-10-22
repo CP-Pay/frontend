@@ -355,14 +355,14 @@ class BackendApiService {
     blockchain_network: string;
     transaction_hash: string;
   }) {
-  return this.post('/payments/bank/transfer', data);
+    return this.post('/payments/crypto-to-naira/paystack/transfer', data);
   }
 
   /**
    * Validate a Nigerian bank account number via the backend
    */
   static async verifyBankAccount(accountNumber: string, bankCode: string) {
-    return this.post('/payments/bank/validate', {
+    return this.post('/payments/crypto-to-naira/banks/validate-account', {
       account_number: accountNumber,
       bank_code: bankCode,
     });
@@ -472,10 +472,16 @@ class BackendApiService {
   static async register(data: {
     email: string;
     password: string;
-    phone_number: string;
-    wallet_address: string;
+    phone_number?: string;
+    referral_code?: string;
   }) {
-    return this.post('/users/register', data);
+    const response = await this.post<{
+      success: boolean;
+      message: string;
+    }>('/auth/register', data);
+    
+    console.log('✅ User registered successfully');
+    return response;
   }
 
   /**
@@ -488,15 +494,149 @@ class BackendApiService {
     const response = await this.post<{
       access_token: string;
       refresh_token: string;
-      user: any;
-    }>('/users/login', data);
+      token_type: string;
+    }>('/auth/login', data);
     
     // Save tokens
+    if (response.access_token) {
+      await this.setTokens(response.access_token, response.refresh_token);
+      console.log('✅ User logged in successfully');
+    }
+    
+    return response;
+  }
+
+  /**
+   * Verify email with token
+   */
+  static async verifyEmail(token: string) {
+    const response = await this.post<{
+      success: boolean;
+      message: string;
+    }>('/auth/verify-email', { token });
+    
+    console.log('✅ Email verified successfully');
+    return response;
+  }
+
+  /**
+   * Resend email verification
+   */
+  static async resendVerification() {
+    const response = await this.post<{
+      success: boolean;
+      message: string;
+    }>('/auth/resend-verification');
+    
+    console.log('✅ Verification email sent');
+    return response;
+  }
+
+  /**
+   * Get current user info
+   */
+  static async getCurrentUser() {
+    return this.get('/auth/me');
+  }
+
+  /**
+   * Logout user
+   */
+  static async logout() {
+    const response = await this.post<{
+      success: boolean;
+      message: string;
+    }>('/auth/logout');
+    
+    // Clear tokens
+    this.accessToken = null;
+    await SecureStore.deleteItemAsync('access_token');
+    await SecureStore.deleteItemAsync('refresh_token');
+    
+    console.log('✅ User logged out');
+    return response;
+  }
+
+  /**
+   * Refresh access token
+   */
+  static async refreshToken() {
+    const refreshToken = await SecureStore.getItemAsync('refresh_token');
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    const response = await this.post<{
+      access_token: string;
+      refresh_token: string;
+      token_type: string;
+    }>('/auth/refresh', { refresh_token: refreshToken });
+    
+    // Update tokens
     if (response.access_token) {
       await this.setTokens(response.access_token, response.refresh_token);
     }
     
     return response;
+  }
+
+  // ============================================================================
+  // WALLET API ENDPOINTS  
+  // ============================================================================
+
+  /**
+   * Register wallet with backend for all networks
+   */
+  static async registerWallet(data: {
+    eoa_address: string;
+    smart_account_address?: string;
+    network: string;
+    chain_id: number;
+  }) {
+    const response = await this.post('/wallets/register', data);
+    console.log(`✅ Wallet registered: ${data.eoa_address} on ${data.network}`);
+    return response;
+  }
+
+  /**
+   * Register wallet for all supported networks
+   */
+  static async registerWalletAllNetworks(eoa_address: string, smart_account_address?: string) {
+    const networks = [
+      { network: 'lisk', chain_id: 1135 },
+      { network: 'lisk-sepolia', chain_id: 4202 },
+      { network: 'ethereum', chain_id: 1 },
+      { network: 'base', chain_id: 8453 },
+      { network: 'arbitrum', chain_id: 42161 },
+      { network: 'optimism', chain_id: 10 },
+      { network: 'polygon', chain_id: 137 },
+    ];
+
+    const results = [];
+    for (const net of networks) {
+      try {
+        const result = await this.registerWallet({
+          eoa_address,
+          smart_account_address,
+          network: net.network,
+          chain_id: net.chain_id
+        });
+        results.push({ ...net, success: true, data: result });
+      } catch (error) {
+        console.warn(`Failed to register wallet on ${net.network}:`, error);
+        results.push({ ...net, success: false, error });
+      }
+    }
+
+    console.log(`✅ Registered wallet on ${results.filter(r => r.success).length}/${networks.length} networks`);
+    return results;
+  }
+
+  /**
+   * Get user wallets
+   */
+  static async getWallets() {
+    return this.get('/wallets');
   }
 
   /**
@@ -536,6 +676,151 @@ class BackendApiService {
    */
   static async getNGNRate() {
     return this.get('/payments/prices/ngn-rate');
+  }
+
+  // ============================================================================
+  // CRYPTO-TO-NAIRA TRANSACTION ENDPOINTS
+  // ============================================================================
+
+  /**
+   * Create crypto-to-naira transaction record
+   */
+  static async createCryptoToNairaTransaction(data: {
+    transactionId: string;
+    cryptoToken: string;
+    cryptoAmount: number;
+    nairaAmount: number;
+    exchangeRate: number;
+    gasFee: number;
+    chainId: number;
+    bankDetails: {
+      bankCode: string;
+      accountNumber: string;
+      accountName: string;
+    };
+  }) {
+    return this.post('/payments/crypto-to-naira/create', data);
+  }
+
+  /**
+   * Calculate crypto needed for fiat amount
+   */
+  static async calculateCryptoNeeded(data: {
+    cryptoToken: string;
+    nairaAmount: number;
+    chainId: number;
+  }) {
+    return this.post('/payments/crypto-to-naira/calculate', data);
+  }
+
+  /**
+   * Get transaction status
+   */
+  static async getCryptoToNairaTransactionStatus(transactionId: string) {
+    return this.get(`/payments/transactions/${transactionId}`);
+  }
+
+  /**
+   * Complete transaction (mark as settled)
+   */
+  static async completeCryptoToNairaTransaction(transactionId: string) {
+    return this.post(`/payments/transactions/${transactionId}/complete`);
+  }
+
+  // ============================================================================
+  // USEROPERATION ENDPOINTS (Account Abstraction)
+  // ============================================================================
+
+  /**
+   * Create UserOperation for swap
+   */
+  static async createUserOperation(data: {
+    transactionId: string;
+    senderAddress: string;
+    callData: string;
+    chainId: number;
+  }) {
+    return this.post('/blockchain/user-operations/create', data);
+  }
+
+  /**
+   * Submit signed UserOperation to bundler
+   */
+  static async submitUserOperation(data: {
+    transactionId: string;
+    userOperation: any;
+    chainId: number;
+  }) {
+    return this.post('/blockchain/user-operations/submit', data);
+  }
+
+  /**
+   * Get UserOperation status
+   */
+  static async getUserOperationStatus(userOperationHash: string, chainId: number) {
+    return this.get(`/blockchain/user-operations/${userOperationHash}`, { params: { chainId } });
+  }
+
+  // ============================================================================
+  // SMART CONTRACT INTERACTION ENDPOINTS
+  // ============================================================================
+
+  /**
+   * Build swap call data for smart contract
+   */
+  static async buildSwapCallData(data: {
+    smartAccountAddress: string;
+    tokenIn: string;
+    amountIn: number;
+    tokenOut: string;
+  }) {
+    return this.post('/blockchain/smart-account/build-swap-call', data);
+  }
+
+  /**
+   * Get smart account address for user
+   */
+  static async getSmartAccountAddress(userAddress: string) {
+    return this.get(`/blockchain/smart-account/${userAddress}`);
+  }
+
+  // ============================================================================
+  // BANK & PAYMENT GATEWAY ENDPOINTS
+  // ============================================================================
+
+  /**
+   * Validate bank account
+   */
+  static async validateBankAccount(bankCode: string, accountNumber: string) {
+    return this.post('/banks/validate-account', { bankCode, accountNumber });
+  }
+
+  /**
+   * Get list of banks
+   */
+  static async getBanks() {
+    return this.get('/payments/crypto-to-naira/banks/list');
+  }
+
+  /**
+   * Initiate Paystack transfer
+   */
+  static async initiatePaystackTransfer(data: {
+    transactionId: string;
+    nairaAmount: number;
+    recipientBankCode: string;
+    recipientAccountNumber: string;
+    recipientAccountName: string;
+    memo?: string;
+  }) {
+    return this.post('/payments/crypto-to-naira/paystack/transfer', data);
+  }
+
+  /**
+   * Get Paystack transfer status
+   */
+  static async getPaystackTransferStatus(reference: string) {
+    return this.get(`/payments/crypto-to-naira/paystack/transfer/${reference}`);
   }
 }
 

@@ -2,6 +2,7 @@ import { BalanceCard } from "@/components/BalanceCard";
 import { QuickActionButton } from "@/components/QuickActionButton";
 import { TransactionItem } from "@/components/TransactionItem";
 import { SmartWalletAddress } from "@/components/SmartWalletAddress";
+import { DualWalletAddress } from "@/components/DualWalletAddress";
 import { TokenList } from "@/components/TokenList";
 import TokenSelector from "@/components/TokenSelector";
 import NetworkSelector from "@/components/NetworkSelector";
@@ -12,7 +13,7 @@ import { transactions } from "@/data/transactions";
 import { user } from "@/data/user";
 import { useWalletStore } from "@/store/walletStore";
 import { fetchTokenBalances, type TokenBalance } from "@/services/TokenBalanceService";
-import { usePortfolio } from "@/hooks/usePortfolio";
+import { useBalances } from "@/hooks/useBalances";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState, useEffect } from "react";
@@ -23,7 +24,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -34,56 +34,34 @@ export default function HomeScreen() {
   const { wallet, initializeSmartAccount } = useWalletStore();
   const { currentNetwork, selectedToken, setSelectedToken, isTestnet } = useNetwork();
   
-  // Portfolio hook - Use EOA address to fetch real balances
-  // Auto-refresh disabled - balance updates via manual refresh or events
-  const { 
-    portfolio, 
-    isLoading: isLoadingPortfolio, 
-    error: portfolioError,
-    refresh: refreshPortfolio,
-    formatNGN 
-  } = usePortfolio({
-    walletAddress: wallet.address || undefined, // Use EOA address, not smart account
-    autoRefresh: false, // Disabled - use manual refresh only
+  // New balance system - always shows cached data, updates in background
+  const {
+    balances: tokenBalances,
+    isUpdating: isLoadingBalances,
+    totalUSD,
+    totalNGN,
+    refresh: refreshBalances,
+    lastUpdated,
+  } = useBalances({
+    address: wallet.address, // Use EOA address for real balances
+    chainId: currentNetwork.chainId,
+    autoRefresh: true, // Auto-refresh when stale
+    refreshOnMount: true, // Refresh on component mount if needed
   });
   
-  // Token balances state
-  const [tokenBalances, setTokenBalances] = useState<TokenBalance[]>([]);
-  const [isLoadingBalances, setIsLoadingBalances] = useState(false);
+  // UI state
   const [showAllTokens, setShowAllTokens] = useState(false);
   const [showNetworkSelector, setShowNetworkSelector] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch token balances only on initial mount
-  // Network changes should be handled by manual refresh
-  useEffect(() => {
-    if (wallet.address) {
-      loadTokenBalances();
-    }
-  }, [wallet.address]); // Only when wallet address changes, not network
-
-  const loadTokenBalances = async () => {
-    if (!wallet.address) return; // Use EOA address
-    
-    setIsLoadingBalances(true);
-    try {
-      const balances = await fetchTokenBalances(
-        wallet.address, // Use EOA address to get real balances
-        currentNetwork.chainId
-      );
-      setTokenBalances(balances);
-    } catch (error) {
-      console.error('Failed to load token balances:', error);
-    } finally {
-      setIsLoadingBalances(false);
-    }
-  };
-
-  // Manual refresh handler - refreshes both portfolio and token balances
+  // Manual refresh handler - user initiated
   const handleManualRefresh = async () => {
-    await Promise.all([
-      refreshPortfolio(),
-      loadTokenBalances()
-    ]);
+    setIsRefreshing(true);
+    try {
+      await refreshBalances();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleRetrySmartAccount = async () => {
@@ -175,7 +153,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={isLoadingPortfolio || isLoadingBalances}
+            refreshing={isRefreshing}
             onRefresh={handleManualRefresh}
             tintColor={colors.primary}
             colors={[colors.primary]}
@@ -196,10 +174,10 @@ export default function HomeScreen() {
             <View style={styles.greetingContainer}>
               <Text style={styles.greeting}>Hi, {user.nickname}</Text>
               {/*  Address - NEW */}
-              <SmartWalletAddress
-                address={wallet.smartAccountAddress}
-                isLoading={false}
-                onRetry={handleRetrySmartAccount}
+              <DualWalletAddress
+                eoaAddress={wallet.address}
+                smartAccountAddress={wallet.smartAccountAddress}
+                compact={true}
               />
               {/* <TouchableOpacity style={styles.tierButton}>
                 <MaterialCommunityIcons name="chevron-right" size={16} color={Colors.warning} />
@@ -232,12 +210,25 @@ export default function HomeScreen() {
 
         {/* Balance Card */}
         <BalanceCard
-          balance={portfolio?.totalValueNGN || 0}
-          isLoading={isLoadingPortfolio}
-          holdings={portfolio?.holdings}
+          balance={totalNGN}
+          isLoading={isLoadingBalances && !totalNGN} // Only show loading if no cached data
+          holdings={tokenBalances.map(tb => {
+            const balanceNum = parseFloat(tb.balance || '0');
+            return {
+              token: tb.token,
+              network: currentNetwork,
+              balance: tb.balance,
+              balanceRaw: tb.balanceRaw,
+              priceUSD: balanceNum > 0 ? tb.balanceUSD / balanceNum : 0,
+              priceNGN: balanceNum > 0 ? tb.balanceNGN / balanceNum : 0,
+              valueUSD: tb.balanceUSD,
+              valueNGN: tb.balanceNGN,
+            };
+          })}
           onTransactionHistory={() => router.push("/transactions" as any)}
           onAddMoney={() => {}}
-          onRefresh={refreshPortfolio}
+          onRefresh={handleManualRefresh}
+          lastUpdated={lastUpdated}
         />
 
         {/* Recent Transactions */}
@@ -291,6 +282,30 @@ export default function HomeScreen() {
             />
           ))}
         </View>
+
+        {/* Token Holdings */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Your Tokens</Text>
+            <TouchableOpacity onPress={() => setShowAllTokens(!showAllTokens)}>
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>
+                {showAllTokens ? 'Show Less' : 'See All'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          <TokenList
+            balances={tokenBalances}
+            isLoading={isLoadingBalances && tokenBalances.length === 0}
+            showAll={showAllTokens}
+            onTokenPress={(balance) => {
+              // Navigate to token details
+              console.log('Token pressed:', balance.token.symbol);
+            }}
+            onRefresh={handleManualRefresh}
+          />
+        </View>
+
         <View style={{ height: 20 }} />
       </ScrollView>
 
@@ -456,6 +471,10 @@ const createStyles = (colors: any) =>
     viewAllText: {
       fontSize: 14,
       color: colors.primary,
+      fontWeight: "600",
+    },
+    seeAllText: {
+      fontSize: 14,
       fontWeight: "600",
     },
     quickActionsContainer: {

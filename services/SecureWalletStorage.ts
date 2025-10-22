@@ -268,6 +268,27 @@ class SecureWalletStorage {
   static async getUserEmail(): Promise<string | null> {
     return await SecureStore.getItemAsync(this.USER_EMAIL_KEY);
   }
+
+  /**
+   * Generic method to store any data
+   */
+  static async setItem(key: string, value: string): Promise<void> {
+    await SecureStore.setItemAsync(key, value);
+  }
+
+  /**
+   * Generic method to get any data
+   */
+  static async getItem(key: string): Promise<string | null> {
+    return await SecureStore.getItemAsync(key);
+  }
+
+  /**
+   * Generic method to delete any data
+   */
+  static async deleteItem(key: string): Promise<void> {
+    await SecureStore.deleteItemAsync(key);
+  }
 }
 
 export default SecureWalletStorage;
