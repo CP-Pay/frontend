@@ -80,6 +80,13 @@ export default function HomeScreen() {
 
   const quickActions = [
     {
+      icon: "currency-ngn",
+      label: "Crypto to ₦",
+      badge: "NEW",
+      badgeColor: colors.success,
+      onPress: () => router.push("/crypto-to-naira" as any),
+    },
+    {
       icon: "bank-transfer",
       label: "NGN to CPPay",
       onPress: () => router.push("/services/p2p-transfer" as any),
@@ -88,11 +95,6 @@ export default function HomeScreen() {
       icon: "bank",
       label: "NGN to Bank",
       onPress: () => router.push("/services/bank-transfer" as any),
-    },
-    {
-      icon: "cash-multiple",
-      label: "Withdraw",
-      onPress: () => router.push("/services/withdraw" as any),
     },
     {
       icon: "send",
